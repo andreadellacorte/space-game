@@ -15,7 +15,3 @@ client/src/improbable/generated
 PlanetWorker/bin/
 PlanetWorker/lib/
 PlanetWorker/src/improbable/generated
-
-DiceWorker/bin/
-DiceWorker/lib/
-DiceWorker/src/improbable/generated
