@@ -1,0 +1,8 @@
+// Copyright (c) Improbable Worlds Ltd, All Rights Reserved
+package demo;
+
+component PlanetInfo {
+	id = 101;
+	string name = 1;
+	uint32 minerals = 2;
+}

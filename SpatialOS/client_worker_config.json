@@ -1,0 +1,29 @@
+{
+  "workerType": "InteractiveClient",
+  "layer": "client",
+  "entityInterest": {
+    "rangeEntityInterest": {
+      "radius": 2
+    }
+  },
+  "componentDelivery": {
+    "default": "RELIABLE_ORDERED",
+    "checkoutAllInitially": true
+  },
+  "uploadConfiguration": {
+    "windows": {
+      "localBuildDirectory": "../client/bin/x64/ReleaseWindows"
+    },
+    "macos": {
+      "localBuildDirectory": "../client/bin/x64/ReleaseMacOS"
+    },
+    "linux": {
+      "localBuildDirectory": "../client/bin/x64/ReleaseLinux"
+    }
+  },
+  "permissions": {
+    "entity_creation": {
+        "allow": true
+    }
+  }
+}
