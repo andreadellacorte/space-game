@@ -27,7 +27,7 @@ namespace Demo
             new EntityId(1)
         };
 
-        private static readonly string[] WorkerAttributes = {"planet"};
+        private static readonly string[] WorkerAttributes = {"planets"};
 
         static int Main(string[] arguments)
         {
