@@ -7,7 +7,7 @@
   "loadBalancing": {
     "layerConfigurations": [
       {
-        "layer": "planet",
+        "layer": "planets",
         "hexGrid": {
           "numWorkers": 2
         }

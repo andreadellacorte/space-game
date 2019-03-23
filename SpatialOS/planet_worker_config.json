@@ -1,6 +1,6 @@
 {
   "workerType": "PlanetWorker",
-  "layer": "greetings",
+  "layer": "planets",
   "entityInterest": {
     "rangeEntityInterest": {
       "radius": 2

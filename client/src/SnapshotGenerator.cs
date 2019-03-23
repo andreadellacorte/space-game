@@ -28,7 +28,7 @@ namespace Demo
                 for (var i = 0; i < workers.Length; i++)
                 {
                     var workerType = workers[i];
-                    entity = createWorker(workerType);
+                    entity = createAuthorityMarker(workerType);
                     error = snapshotOutput.WriteEntity(new EntityId(entityId), entity);
                     if (error.HasValue)
                     {
@@ -45,7 +45,6 @@ namespace Demo
                 {
                     throw new System.SystemException("error saving: " + error.Value);
                 }
-                
             }
         }
         
@@ -53,14 +52,13 @@ namespace Demo
         {
             var entity = new Entity();
             const string entityType = "Planet";
-            const string workerType = "PlanetWorker";
             
             // Defines worker attribute requirements for workers that can read a component.
             // workers with an attribute of "client" OR workerType will have read access
             var readRequirementSet = new WorkerRequirementSet(
                 new Improbable.Collections.List<WorkerAttributeSet>
                 {
-                    new WorkerAttributeSet(new Improbable.Collections.List<string> {workerType}),
+                    new WorkerAttributeSet(new Improbable.Collections.List<string> {"planets"}),
                     new WorkerAttributeSet(new Improbable.Collections.List<string> {"client"}),
                 });
 
@@ -69,7 +67,7 @@ namespace Demo
             var workerWriteRequirementSet = new WorkerRequirementSet(
                 new Improbable.Collections.List<WorkerAttributeSet>
                 {
-                    new WorkerAttributeSet(new Improbable.Collections.List<string> {workerType}),
+                    new WorkerAttributeSet(new Improbable.Collections.List<string> {"planets"}),
                 });
             
             var writeAcl = new Improbable.Collections.Map<uint, WorkerRequirementSet>
@@ -88,7 +86,7 @@ namespace Demo
             return entity;
         }
 
-        private static Entity createWorker(string workerType)
+        private static Entity createAuthorityMarker(string workerType)
         {
             var entity = new Entity();
             const string entityType = "AuthorityMarker";
