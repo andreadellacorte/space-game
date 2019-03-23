@@ -14,6 +14,7 @@ namespace Demo
 {
   class Client
   {
+    private const uint timeoutMillis = 500u;
     private const string ProjectName = "Demo";
     private const string WorkerType = "InteractiveClient";
     private const string LoggerName = "Client.cs";
@@ -21,6 +22,7 @@ namespace Demo
     private const uint GetOpListTimeoutInMilliseconds = 100;
     private const uint CommandRequestTimeoutMS = 100;
     private const int pingIntervalMs = 5000;
+    private const string playerType = "Player";
 
     private static readonly EntityId[] EntityIds =
     {
@@ -80,6 +82,7 @@ namespace Demo
               Environment.Exit(ErrorExitStatus);
             }
           });
+
           dispatcher.OnAuthorityChange<Position>(cb =>
           {
             Console.WriteLine("authority change {0}", cb.Authority);
@@ -92,6 +95,43 @@ namespace Demo
 
           connection.SendLogMessage(LogLevel.Info, LoggerName,
             "Successfully connected using TCP and the Receptionist");
+         
+          // Reserve an entity ID.
+          var entityIdReservationRequestId = default(RequestId<ReserveEntityIdsRequest>);
+
+          // When the reservation succeeds, create an entity with the reserved ID.
+          var entityCreationRequestId = default(RequestId<CreateEntityRequest>);
+            
+          dispatcher.OnReserveEntityIdsResponse(op =>
+          {
+            Console.WriteLine("RequestId " + op.RequestId);
+            Console.WriteLine("entityIdReservationRequestId " + entityIdReservationRequestId);
+            Console.WriteLine("op.StatusCode " + op.StatusCode);
+            Console.WriteLine("Status.Success" + StatusCode.Success);
+            if (op.RequestId == entityIdReservationRequestId && op.StatusCode == StatusCode.Success)
+            {
+              var entity = new Entity();
+              // Empty ACL - should be customised.
+              entity.Add(new Improbable.EntityAcl.Data(
+                new Improbable.WorkerRequirementSet(new Improbable.Collections.List<Improbable.WorkerAttributeSet>()),
+                new Improbable.Collections.Map<uint, Improbable.WorkerRequirementSet>()));
+              // Needed for the entity to be persisted in snapshots.
+              entity.Add(new Improbable.Persistence.Data());
+              entity.Add(new Improbable.Metadata.Data(playerType));
+              entity.Add(new Improbable.Position.Data(new Improbable.Coordinates(1, 2, 3)));
+              entityCreationRequestId = connection.SendCreateEntityRequest(entity, op.FirstEntityId, timeoutMillis);
+            }
+          });
+          
+          dispatcher.OnCreateEntityResponse(op =>
+          {
+            if (op.RequestId == entityCreationRequestId && op.StatusCode == StatusCode.Success)
+            {
+              Console.WriteLine("Success!");
+            }
+            
+            Console.WriteLine("Failed for some reason");
+          });
           
           // UX Thread to read from CLI
           new Thread(() =>
@@ -100,11 +140,8 @@ namespace Demo
             {
               Thread.CurrentThread.IsBackground = true;
               string s = Console.ReadLine();
-              // foreach (var entityId in entitiesToRespond)
-              // {
-              //     SendGetWorkerTypeCommand(connection, entityId);
-              // }
-              CreateEntity(dispatcher, connection);
+
+              entityIdReservationRequestId = connection.SendReserveEntityIdsRequest(1, timeoutMillis);
             }
           }).Start();
           
@@ -170,51 +207,6 @@ namespace Demo
     //         connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
     //     }
     // }
-
-    private static void CreateEntity(Dispatcher dispatcher, Connection connection)
-    {
-      const uint timeoutMillis = 500u;
-      const string entityType = "Player";
-     
-      // Reserve an entity ID.
-      var entityIdReservationRequestId = default(RequestId<ReserveEntityIdsRequest>);
-
-      // When the reservation succeeds, create an entity with the reserved ID.
-      var entityCreationRequestId = default(RequestId<CreateEntityRequest>);
-
-      dispatcher.OnReserveEntityIdsResponse(op =>
-      {
-        Console.WriteLine("RequestId " + op.RequestId);
-        Console.WriteLine("entityIdReservationRequestId " + entityIdReservationRequestId);
-        Console.WriteLine("op.StatusCode " + op.StatusCode);
-        Console.WriteLine("Status.Success" + StatusCode.Success);
-        if (op.RequestId == entityIdReservationRequestId && op.StatusCode == StatusCode.Success);
-        {
-          var entity = new Entity();
-          // Empty ACL - should be customised.
-          entity.Add(new Improbable.EntityAcl.Data(
-            new Improbable.WorkerRequirementSet(new Improbable.Collections.List<Improbable.WorkerAttributeSet>()),
-            new Improbable.Collections.Map<uint, Improbable.WorkerRequirementSet>()));
-          // Needed for the entity to be persisted in snapshots.
-          entity.Add(new Improbable.Persistence.Data());
-          entity.Add(new Improbable.Metadata.Data(entityType));
-          entity.Add(new Improbable.Position.Data(new Improbable.Coordinates(1, 2, 3)));
-          entityCreationRequestId = connection.SendCreateEntityRequest(entity, op.FirstEntityId, timeoutMillis);
-        }
-      });
-      
-      dispatcher.OnCreateEntityResponse(op =>
-      {
-      if (op.RequestId == entityCreationRequestId && op.StatusCode == StatusCode.Success)
-      {
-        Console.WriteLine("Success!");
-      }
-      
-      Console.WriteLine("Failed for some reason");
-      });
-      
-      entityIdReservationRequestId = connection.SendReserveEntityIdsRequest(1, timeoutMillis);
-    }
 
     // private static void SendGetWorkerTypeCommand(Connection connection, EntityId entityId)
     // {

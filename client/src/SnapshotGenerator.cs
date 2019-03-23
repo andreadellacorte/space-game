@@ -6,10 +6,7 @@ using Improbable;
 using Improbable.Worker;
 using Improbable.Collections;
 using System.Collections.Generic;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Reflection;
 using System.Text;
 
 namespace Demo
