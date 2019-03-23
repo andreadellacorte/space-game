@@ -3,9 +3,9 @@ language: objective-c
 env:
   global:
     - HOMEBREW_FOLDER=$HOME/Library/Caches/Homebrew
-    - DEPLOYMENT_NAME=space-game
+    - DEPLOYMENT_NAME=spacegame
     - DEPLOYMENT_TTL=ttl_1_hours
-    - ASSEMBLY_NAME=mysimplerpg_$TRAVIS_JOB_NUMBER
+    - ASSEMBLY_NAME=spacegame_$TRAVIS_JOB_NUMBER
 
 cache:
   timeout: 3600
@@ -14,7 +14,7 @@ cache:
 
 notifications:
   email:
-    - andrea@dellacorte.me
+    - andrea@improbable.io
 
 before_install:
 - brew update
