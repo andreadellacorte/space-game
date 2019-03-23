@@ -2,6 +2,8 @@
 
 set -u
 
+pushd SpatialOS
+
 gtimeout 45s spatial local launch
 
 status=$?
@@ -11,3 +13,5 @@ then
     exit 0
 fi
 exit $status
+
+popd
