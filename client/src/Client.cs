@@ -122,16 +122,14 @@ namespace Demo
               entityCreationRequestId = connection.SendCreateEntityRequest(entity, op.FirstEntityId, timeoutMillis);
             }
           });
-          
-          dispatcher.OnCreateEntityResponse(op =>
-          {
-            if (op.RequestId == entityCreationRequestId && op.StatusCode == StatusCode.Success)
-            {
-              Console.WriteLine("Success!");
-            }
-            
-            Console.WriteLine("Failed for some reason");
-          });
+
+          // dispatcher.OnCommandResponse<PingResponder.Commands.Ping>(response =>
+          // {
+          //     HandlePong(response, connection);
+          // });
+
+          connection.SendLogMessage(LogLevel.Info, LoggerName,
+            "Successfully connected using TCP and the Receptionist");
           
           // UX Thread to read from CLI
           new Thread(() =>
