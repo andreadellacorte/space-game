@@ -13,8 +13,8 @@ notifications:
   email:
     - andrea@improbable.io
 before_install:
-  - chmod a+x ./scripts/install.sh
   - chmod a+x ./scripts/secret.sh
+  - chmod a+x ./scripts/install.sh
   - chmod a+x ./scripts/tear_down.sh
   - chmod a+x ./scripts/build.sh
   - chmod a+x ./scripts/test_local.sh
