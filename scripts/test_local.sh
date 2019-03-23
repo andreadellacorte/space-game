@@ -4,7 +4,7 @@ set -u
 
 pushd SpatialOS
 
-gtimeout 45s spatial local launch
+gtimeout 45s spatial alpha local launch
 
 status=$?
 
