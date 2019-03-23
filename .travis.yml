@@ -1,0 +1,41 @@
+language: objective-c
+
+env:
+  global:
+    - HOMEBREW_FOLDER=$HOME/Library/Caches/Homebrew
+    - DEPLOYMENT_NAME=space-game
+    - DEPLOYMENT_TTL=ttl_1_hours
+    - ASSEMBLY_NAME=mysimplerpg_$TRAVIS_JOB_NUMBER
+
+cache:
+  timeout: 3600
+  directories:
+    - $HOMEBREW_FOLDER
+
+notifications:
+  email:
+    - andrea@dellacorte.me
+
+before_install:
+- brew update
+- chmod a+x ./scripts/install.sh
+- chmod a+x ./scripts/secret.sh
+- chmod a+x ./scripts/tear_down.sh
+- chmod a+x ./scripts/build.sh
+- chmod a+x ./scripts/test_local.sh
+- chmod a+x ./scripts/deploy.sh
+
+install:
+- ./scripts/install.sh
+
+before_script:
+- ./scripts/secret.sh
+- ./scripts/tear_down.sh
+
+script:
+- ./scripts/build.sh
+- if [ $TRAVIS_TEST_RESULT -eq 0 ]; then ./scripts/test_local.sh; fi
+- if [ $TRAVIS_TEST_RESULT -eq 0 ]; then ./scripts/deploy.sh; fi
+
+after_script:
+- curl --upload-file $TRAVIS_BUILD_DIR/logs/spatial.log https://transfer.sh/spatial_$TRAVIS_BUILD_NUMBER.log
