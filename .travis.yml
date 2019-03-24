@@ -1,7 +1,4 @@
-os: osx
-language: ruby
-rvm:
-  - 2.3.7
+language: objective-c
 env:
   global:
     - HOMEBREW_FOLDER=$HOME/Library/Caches/Homebrew
