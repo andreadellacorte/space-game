@@ -1,4 +1,6 @@
 os: osx
+rvm:
+  - 2.3.7
 env:
   global:
     - HOMEBREW_FOLDER=$HOME/Library/Caches/Homebrew
@@ -19,6 +21,7 @@ before_install:
   - chmod a+x ./ci/build.sh
   - chmod a+x ./ci/test_local.sh
   - chmod a+x ./ci/deploy.sh
+  - rvm --default use 2.3.7
 install:
   - "./ci/install.sh"
 before_script:
