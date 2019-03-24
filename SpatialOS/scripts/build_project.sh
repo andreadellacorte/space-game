@@ -12,7 +12,7 @@ source ./utils.sh
 # Build all workers in the project
 for WORKER_DIR in "${WORKER_DIRS[@]}"; do
   pushd "${WORKER_DIR}"
-  ./build.sh
+  ../SpatialOS/scripts/build_worker.sh
   popd
 done
 
