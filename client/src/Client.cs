@@ -14,14 +14,22 @@ namespace Demo
 {
   class Client
   {
-    private const uint timeoutMillis = 500u;
     private const string WorkerType = "InteractiveClient";
     private const string LoggerName = "Client.cs";
     private const int ErrorExitStatus = 1;
     private const uint GetOpListTimeoutInMilliseconds = 100;
     private const uint CommandRequestTimeoutMS = 100;
     private const int pingIntervalMs = 5000;
-    private const string playerType = "Player";
+    
+    private static string workerId;
+    
+    private static readonly EntityId[] PlanetAuthorityMarkersEntityIds =
+    {
+      new EntityId(1),
+      new EntityId(2),
+      new EntityId(3),
+      new EntityId(4)
+    };
 
     static int Main(string[] arguments)
     {
@@ -45,11 +53,9 @@ namespace Demo
       {
         using (var dispatcher = new Dispatcher())
         {
-          var watch = new Stopwatch();
-          watch.Start();
-
           var isConnected = true;
           
+          var authorityMarkers = new HashSet<EntityId>(PlanetAuthorityMarkersEntityIds);
 
           dispatcher.OnDisconnect(op =>
           {
@@ -73,48 +79,16 @@ namespace Demo
             Console.WriteLine("authority change {0}", cb.Authority);
           });
 
-          // dispatcher.OnCommandResponse<PingResponder.Commands.Ping>(response =>
-          // {
-          //     HandlePong(response, connection);
-          // });
-
           connection.SendLogMessage(LogLevel.Info, LoggerName,
             "Successfully connected using TCP and the Receptionist");
-         
-          // Reserve an entity ID.
-          var entityIdReservationRequestId = default(RequestId<ReserveEntityIdsRequest>);
-
-          // When the reservation succeeds, create an entity with the reserved ID.
-          var entityCreationRequestId = default(RequestId<CreateEntityRequest>);
             
-          dispatcher.OnReserveEntityIdsResponse(op =>
+          AssignPlanetResponder.Commands.AssignPlanet.Request assignPlanet =
+            new AssignPlanetResponder.Commands.AssignPlanet.Request(new AssignPlanetRequest());
+            
+          foreach (var entityId in authorityMarkers)
           {
-            Console.WriteLine("RequestId " + op.RequestId);
-            Console.WriteLine("entityIdReservationRequestId " + entityIdReservationRequestId);
-            Console.WriteLine("op.StatusCode " + op.StatusCode);
-            Console.WriteLine("Status.Success" + StatusCode.Success);
-            if (op.RequestId == entityIdReservationRequestId && op.StatusCode == StatusCode.Success)
-            {
-              var entity = new Entity();
-              // Empty ACL - should be customised.
-              entity.Add(new Improbable.EntityAcl.Data(
-                new Improbable.WorkerRequirementSet(new Improbable.Collections.List<Improbable.WorkerAttributeSet>()),
-                new Improbable.Collections.Map<uint, Improbable.WorkerRequirementSet>()));
-              // Needed for the entity to be persisted in snapshots.
-              entity.Add(new Improbable.Persistence.Data());
-              entity.Add(new Improbable.Metadata.Data(playerType));
-              entity.Add(new Improbable.Position.Data(new Improbable.Coordinates(1, 2, 3)));
-              entityCreationRequestId = connection.SendCreateEntityRequest(entity, op.FirstEntityId, timeoutMillis);
-            }
-          });
-
-          // dispatcher.OnCommandResponse<PingResponder.Commands.Ping>(response =>
-          // {
-          //     HandlePong(response, connection);
-          // });
-
-          connection.SendLogMessage(LogLevel.Info, LoggerName,
-            "Successfully connected using TCP and the Receptionist");
+              connection.SendCommandRequest(entityId, assignPlanet, CommandRequestTimeoutMS, null);
+          }
           
           // UX Thread to read from CLI
           new Thread(() =>
@@ -123,8 +97,12 @@ namespace Demo
             {
               Thread.CurrentThread.IsBackground = true;
               string s = Console.ReadLine();
-
-              entityIdReservationRequestId = connection.SendReserveEntityIdsRequest(1, timeoutMillis);
+              Console.WriteLine("Please enter your command:");
+              Console.WriteLine("1. Build mine");
+              
+              if(s == "1"){
+                
+              }
             }
           }).Start();
           
@@ -144,7 +122,7 @@ namespace Demo
     {
       string hostname = arguments[0];
       ushort port = Convert.ToUInt16(arguments[1]);
-      string workerId = arguments[2];
+      workerId = arguments[2];
       var connectionParameters = new ConnectionParameters();
       connectionParameters.WorkerType = WorkerType;
       connectionParameters.Network.ConnectionType = NetworkConnectionType.Tcp;

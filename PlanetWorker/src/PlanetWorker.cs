@@ -8,14 +8,12 @@ namespace Demo
 {
   class PlanetWorker
   {
+    private const uint timeoutMillis = 500u;
     private const string WorkerType = "PlanetWorker";
     private const string LoggerName = "PlanetWorker.cs";
     private const int ErrorExitStatus = 1;
     private const uint GetOpListTimeoutInMilliseconds = 100;
-    private static readonly string[] hellos = {
-      "Hello", "Bonjour", "Ciao", "Guten Tag", "nĭ hăo" // A selection of Greetings in arbitrary languages
-    };
-    private static readonly Random random = new Random();
+    private const string playerType = "Player";
 
     static int Main(string[] arguments)
     {
@@ -27,6 +25,7 @@ namespace Demo
         Console.WriteLine("    <port>          - port to use.");
         Console.WriteLine("    <worker_id>     - name of the worker assigned by SpatialOS.");
       };
+
       if (arguments.Length < 3)
       {
         printUsage();
@@ -56,19 +55,52 @@ namespace Demo
               Environment.Exit(ErrorExitStatus);
             }
           });
+          
+          var entityIdReservationRequestId = default(RequestId<ReserveEntityIdsRequest>);
+          var entityCreationRequestId = default(RequestId<CreateEntityRequest>);
+            
+          dispatcher.OnReserveEntityIdsResponse(op =>
+          {
+            if (op.RequestId == entityIdReservationRequestId && op.StatusCode == StatusCode.Success)
+            {
+              var entity = new Entity();
+              // Empty ACL - should be customised.
+              entity.Add(new Improbable.EntityAcl.Data(
+                new Improbable.WorkerRequirementSet(new Improbable.Collections.List<Improbable.WorkerAttributeSet>()),
+                new Improbable.Collections.Map<uint, Improbable.WorkerRequirementSet>()));
+              // Needed for the entity to be persisted in snapshots.
+              entity.Add(new Improbable.Persistence.Data());
+              entity.Add(new Improbable.Metadata.Data(playerType));
+              entity.Add(new Improbable.Position.Data(new Improbable.Coordinates(0, 0, 0)));
+              entityCreationRequestId = connection.SendCreateEntityRequest(entity, op.FirstEntityId, timeoutMillis);
+            }
+          });
+          
+          dispatcher.OnCreateEntityResponse(op =>
+          {
+            if (op.RequestId == entityCreationRequestId && op.StatusCode == StatusCode.Success)
+            {
+              Console.WriteLine("Success!");
+            }
+            
+            Console.WriteLine("Failed for some reason");
+          });
 
-          // dispatcher.OnCommandRequest<PingResponder.Commands.Ping>(request =>
-          // {
-          //     connection.SendLogMessage(LogLevel.Info, LoggerName, "Received GetWorkerType command");
-          //
-          //     var greeting = hellos[random.Next(hellos.Length)];
+          dispatcher.OnCommandRequest<AssignPlanetResponder.Commands.AssignPlanet>(request =>
+          {
+              connection.SendLogMessage(LogLevel.Info, LoggerName, "Received GetWorkerType command");
+              
+              entityIdReservationRequestId = connection.SendReserveEntityIdsRequest(1, timeoutMillis);
+              
+          //    var greeting = hellos[random.Next(hellos.Length)];
           //     var pingResponse = new Pong(WorkerType, String.Format("{0}, World!", greeting));
           //     var commandResponse = new PingResponder.Commands.Ping.Response(pingResponse);
           //     connection.SendCommandResponse(request.RequestId, commandResponse);
-          // });
+          });
 
           connection.SendLogMessage(LogLevel.Info, LoggerName,
             "Successfully connected using TCP and the Receptionist");
+
           while (isConnected)
           {
             using (var opList = connection.GetOpList(GetOpListTimeoutInMilliseconds))

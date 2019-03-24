@@ -20,10 +20,5 @@
     "linux": {
       "localBuildDirectory": "../client/bin/x64/ReleaseLinux"
     }
-  },
-  "permissions": {
-    "entity_creation": {
-        "allow": true
-    }
   }
 }
