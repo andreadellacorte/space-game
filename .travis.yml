@@ -1,4 +1,4 @@
-language: objective-c
+os: osx
 env:
   global:
     - HOMEBREW_FOLDER=$HOME/Library/Caches/Homebrew
@@ -29,4 +29,4 @@ script:
   - if [ $TRAVIS_TEST_RESULT -eq 0 ]; then ./ci/test_local.sh; fi
   - if [ $TRAVIS_TEST_RESULT -eq 0 ]; then ./ci/deploy.sh; fi
 after_script:
-  - curl --upload-file $TRAVIS_BUILD_DIR/logs/spatial.log https://transfer.sh/spatial_$TRAVIS_BUILD_NUMBER.log
+  - curl --upload-file $(ls -t $TRAVIS_BUILD_DIR/SpatialOS/logs/spatial_* | head -n 1) https://transfer.sh/spatial_$TRAVIS_BUILD_NUMBER.log
