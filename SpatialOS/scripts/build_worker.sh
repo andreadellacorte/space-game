@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
-# This script builds the Client worker executable to client/bin
+# This script builds the workers executable to folder/bin
 
 set -e -x
-pushd "$( dirname "${BASH_SOURCE[0]}" )"
 source ../SpatialOS/scripts/utils.sh
 
 # Download the dependenties in case they are not present
@@ -28,5 +27,3 @@ for PLATFORM in "${BUILD_PLATFORMS[@]}"; do
   rm -rf $(pwd)/src/bin
   rm -rf $(pwd)/src/obj
 done
-
-popd

@@ -15,7 +15,6 @@ namespace Demo
   class Client
   {
     private const uint timeoutMillis = 500u;
-    private const string ProjectName = "Demo";
     private const string WorkerType = "InteractiveClient";
     private const string LoggerName = "Client.cs";
     private const int ErrorExitStatus = 1;
@@ -23,13 +22,6 @@ namespace Demo
     private const uint CommandRequestTimeoutMS = 100;
     private const int pingIntervalMs = 5000;
     private const string playerType = "Player";
-
-    private static readonly EntityId[] EntityIds =
-    {
-      new EntityId(1)
-    };
-
-    private static readonly string[] WorkerAttributes = {"planets"};
 
     static int Main(string[] arguments)
     {
@@ -40,19 +32,12 @@ namespace Demo
         Console.WriteLine("    <hostname>      - hostname of the receptionist to connect to.");
         Console.WriteLine("    <port>          - port to use.");
         Console.WriteLine("    <client_id>     - name of the client.");
-        Console.WriteLine("Alternatively: Client <snapshotfile> will generate a snapshot and exit.");
       };
 
-      if (arguments.Length != 1 && arguments.Length != 3)
+      if (arguments.Length != 3)
       {
         printUsage();
         return ErrorExitStatus;
-      }
-
-      if (arguments.Length == 1)
-      {
-        SnapshotGenerator.GenerateSnapshot(arguments[0], WorkerAttributes);
-        return 0;
       }
 
       Console.WriteLine("Client Starting...");
@@ -64,7 +49,7 @@ namespace Demo
           watch.Start();
 
           var isConnected = true;
-          var entitiesToRespond = new HashSet<EntityId>(EntityIds);
+          
 
           dispatcher.OnDisconnect(op =>
           {

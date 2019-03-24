@@ -12,6 +12,10 @@ client/bin/
 client/lib/
 client/src/improbable/generated
 
+SnapshotGenerator/bin/
+SnapshotGenerator/lib/
+SnapshotGenerator/src/improbable/generated
+
 PlanetWorker/bin/
 PlanetWorker/lib/
 PlanetWorker/src/improbable/generated

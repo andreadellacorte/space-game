@@ -3,10 +3,11 @@
   "projectName": "beta_batman_crazy_339",
   "schemaDescriptor": "./schema/bin/schema.descriptor",
   "clientWorkers": [
-    "./client_worker_config.json"
+    "../client/client_worker_config.json",
+    "../SnapshotGenerator/snapshot_generator_worker_config.json"
   ],
   "serverWorkers": [
-    "./planet_worker_config.json"
+    "../PlanetWorker/planet_worker_config.json"
   ],
-  "launchConfig": "./launch_configs/deployment.json"
+  "launchConfig": "./deployment.json"
 }

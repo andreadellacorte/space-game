@@ -9,7 +9,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{5F743C5A-5961-4406-83A9-3D97CB5FE4ED}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <AssemblyName>Client</AssemblyName>
+    <AssemblyName>SnapshotGenerator</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -23,7 +23,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml" />
-    <Compile Include="Client.cs" />
+    <Compile Include="SnapshotGenerator.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\lib\improbable\sdk\13.5.1\linux64\libCoreSdkDll.so">
