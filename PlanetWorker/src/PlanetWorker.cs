@@ -70,6 +70,9 @@ namespace Demo
           
           dispatcher.OnAuthorityChange<PlanetInfo>(op =>
           {
+            var logMessage = String.Format("Changing Authority for entityId {0}", op.EntityId);
+            connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+
             ViewEntity entity;
             if (EntityView.TryGetValue(op.EntityId, out entity))
             {
@@ -90,6 +93,9 @@ namespace Demo
           
           dispatcher.OnAddComponent<PlanetInfo>(op =>
           {
+            var logMessage = String.Format("Adding PlanetInfo Component for entityId {0}", op.EntityId);
+            connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+
             ViewEntity entity;
             if (EntityView.TryGetValue(op.EntityId, out entity))
             {
@@ -105,6 +111,9 @@ namespace Demo
           
           dispatcher.OnComponentUpdate<PlanetInfo>(op=>
           {
+            var logMessage = String.Format("Updating PlanetInfo Component for entityId {0}", op.EntityId);
+            connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+
             ViewEntity entity;
             if (EntityView.TryGetValue(op.EntityId, out entity))
             {
@@ -115,6 +124,9 @@ namespace Demo
           
           dispatcher.OnAddEntity(op =>
           {
+            var logMessage = String.Format("Adding entityId {0}", op.EntityId);
+            connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+
             // AddEntity will always be followed by OnAddComponent
             ViewEntity newEntity = new ViewEntity();
             newEntity.hasAuthority = true;
@@ -130,35 +142,27 @@ namespace Demo
           {
             EntityView.Remove(op.EntityId);
           });
-          
-          var entityIdReservationRequestId = default(RequestId<ReserveEntityIdsRequest>);
-          var entityCreationRequestId = default(RequestId<CreateEntityRequest>);
-            
-          dispatcher.OnReserveEntityIdsResponse(op =>
+
+          dispatcher.OnCommandRequest<AssignPlanetResponder.Commands.AssignPlanet>(request =>
           {
-            if (op.RequestId == entityIdReservationRequestId && op.StatusCode == StatusCode.Success)
-            {
-              var entity = new Entity();
-              // Empty ACL - should be customised.
-              entity.Add(new Improbable.EntityAcl.Data(
-                new Improbable.WorkerRequirementSet(new Improbable.Collections.List<Improbable.WorkerAttributeSet>()),
-                new Improbable.Collections.Map<uint, Improbable.WorkerRequirementSet>()));
-              // Needed for the entity to be persisted in snapshots.
-              entity.Add(new Improbable.Persistence.Data());
-              entity.Add(new Improbable.Metadata.Data(playerType));
-              entity.Add(new Improbable.Position.Data(new Improbable.Coordinates(0, 0, 0)));
-              entityCreationRequestId = connection.SendCreateEntityRequest(entity, op.FirstEntityId, timeoutMillis);
-            }
-          });
-          
-          dispatcher.OnCreateEntityResponse(op =>
-          {
-            if (op.RequestId == entityCreationRequestId && op.StatusCode == StatusCode.Success)
-            {
-              Console.WriteLine("Success!");
+            var logMessage = String.Format("Received AssignPlanet command from player {0}", request.Request.Get().Value.playerId);
+            connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
               
               foreach (KeyValuePair<EntityId, ViewEntity> pair in EntityView)
               {
+                if(!pair.Value.hasAuthority)
+                {
+                  logMessage = String.Format("Skipping planet with entityId {0} because I don't have authority", pair.Key);
+                  connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+                  continue;
+                }
+                
+                logMessage = String.Format("Picked planet with entityId {0} because I have authority", pair.Key);
+                connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+                
+                logMessage = String.Format("Entity.PlanetInfo: {0}", pair.Value.entity.Get<PlanetInfo>());
+                connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+                
                 Option<IComponentData<PlanetInfo>> option;
                 IComponentData<PlanetInfo> planetInfo;
                 PlanetInfo.Data planetInfoData;
@@ -169,36 +173,29 @@ namespace Demo
                 planetInfoData = planetInfo.Get();
                 pid = planetInfoData.Value;
                 
-                if(pid.player.Id == 0)
+                logMessage = String.Format("Entity {0} has playerId {1}", pair.Key, pid.playerId);
+                connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+                
+                if(pid.playerId == "")
                 {
-                  var id = pair.Key;
+                  var planetId = pair.Key;
+                  var playerId = request.Request.Get().Value.playerId;
                   
                   //Create new component update object
                   PlanetInfo.Update piu = new PlanetInfo.Update();
+                  piu.SetPlayerId(playerId);
                   
-                  piu.SetPlayer(new EntityId(6));
+                  // Send the updates
+                  connection.SendComponentUpdate<PlanetInfo>(planetId, piu);
                   
-                  //Send the updates
-                  connection.SendComponentUpdate<PlanetInfo>(id, piu);
+                  // Send the assigned planet to the client
+                  var assignPlanetResponse = new AssignPlanetResponse(planetId);
+                  var commandResponse = new AssignPlanetResponder.Commands.AssignPlanet.Response(assignPlanetResponse);
+                  connection.SendCommandResponse(request.RequestId, commandResponse);
                   
                   break;
                 }
               }
-            }
-            
-            Console.WriteLine("Failed for some reason");
-          });
-
-          dispatcher.OnCommandRequest<AssignPlanetResponder.Commands.AssignPlanet>(request =>
-          {
-              connection.SendLogMessage(LogLevel.Info, LoggerName, "Received AssignPlanet command");
-              
-              entityIdReservationRequestId = connection.SendReserveEntityIdsRequest(1, timeoutMillis);
-              
-          //    var greeting = hellos[random.Next(hellos.Length)];
-          //     var pingResponse = new Pong(WorkerType, String.Format("{0}, World!", greeting));
-          //     var commandResponse = new PingResponder.Commands.Ping.Response(pingResponse);
-          //     connection.SendCommandResponse(request.RequestId, commandResponse);
           });
 
           connection.SendLogMessage(LogLevel.Info, LoggerName,

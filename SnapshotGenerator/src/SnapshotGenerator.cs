@@ -99,7 +99,6 @@ namespace Demo
         new Improbable.Collections.List<WorkerAttributeSet>
         {
             new WorkerAttributeSet(new Improbable.Collections.List<string> {"planets"}),
-            new WorkerAttributeSet(new Improbable.Collections.List<string> {"client"}),
         });
 
       // Defines worker attribute requirements for workers that can write to a component.
@@ -122,7 +121,7 @@ namespace Demo
       entity.Add(new Persistence.Data());
       entity.Add(new Metadata.Data(entityType));
       entity.Add(new Position.Data(new Coordinates(x, 0, z)));
-      entity.Add(new PlanetInfo.Data(new EntityId(0), "Planet Name", 0));
+      entity.Add(new PlanetInfo.Data("", "Planet Name", 0));
       return entity;
     }
 
@@ -160,6 +159,7 @@ namespace Demo
       entity.Add(new Persistence.Data());
       entity.Add(new Metadata.Data(entityType));
       entity.Add(new Position.Data(new Coordinates(x, 0, z)));
+      entity.Add(new AssignPlanetResponder.Data());
       return entity;
     }
   }

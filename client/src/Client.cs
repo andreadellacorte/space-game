@@ -22,7 +22,8 @@ namespace Demo
     private const int pingIntervalMs = 5000;
     
     private static readonly Random random = new Random();
-    private static string workerId;
+    private static string playerId;
+    private static EntityId planetId;
     
     private static readonly EntityId[] PlanetAuthorityMarkersEntityIds =
     {
@@ -77,12 +78,17 @@ namespace Demo
           {
             Console.WriteLine("authority change {0}", cb.Authority);
           });
+          
+          dispatcher.OnCommandResponse<AssignPlanetResponder.Commands.AssignPlanet>(response =>
+          {
+              HandleAssignPlanet(response, connection);
+          });
 
           connection.SendLogMessage(LogLevel.Info, LoggerName,
             "Successfully connected using TCP and the Receptionist");
             
           AssignPlanetResponder.Commands.AssignPlanet.Request assignPlanet =
-            new AssignPlanetResponder.Commands.AssignPlanet.Request(new AssignPlanetRequest());
+            new AssignPlanetResponder.Commands.AssignPlanet.Request(new AssignPlanetRequest(playerId));
 
           connection.SendCommandRequest(PlanetAuthorityMarkersEntityIds[random.Next(PlanetAuthorityMarkersEntityIds.Length)], assignPlanet, CommandRequestTimeoutMS, null);
           
@@ -96,8 +102,13 @@ namespace Demo
               Console.WriteLine("Please enter your command:");
               Console.WriteLine("1. Build mine");
               
-              if(s == "1"){
-                
+              if(s == "1")
+              {
+                Console.WriteLine("PRRR, new mine built.");
+              }
+              else
+              {
+                Console.WriteLine("No idea about that command, sorry.");
               }
             }
           }).Start();
@@ -118,14 +129,48 @@ namespace Demo
     {
       string hostname = arguments[0];
       ushort port = Convert.ToUInt16(arguments[1]);
-      workerId = arguments[2];
+      playerId = arguments[2];
       var connectionParameters = new ConnectionParameters();
       connectionParameters.WorkerType = WorkerType;
       connectionParameters.Network.ConnectionType = NetworkConnectionType.Tcp;
 
-      using (var future = Connection.ConnectAsync(hostname, port, workerId, connectionParameters))
+      using (var future = Connection.ConnectAsync(hostname, port, playerId, connectionParameters))
       {
         return future.Get();
+      }
+    }
+    
+    private static void HandleAssignPlanet(CommandResponseOp<AssignPlanetResponder.Commands.AssignPlanet> response, Connection connection)
+    {
+      if (response.StatusCode != StatusCode.Success)
+      {
+        StringBuilder logMessageBuilder = new StringBuilder();
+        logMessageBuilder.Append(
+            String.Format("Received invalid OnCommandResponse for request ID {0} with status code {1} to entity with ID {2}.", response.RequestId, response.StatusCode, response.EntityId));
+        if (!string.IsNullOrEmpty(response.Message))
+        {
+            logMessageBuilder.Append(String.Format("The message was \'{0}\'.", response.Message));
+        }
+
+        if (!response.Response.HasValue)
+        {
+            logMessageBuilder.Append("The response was missing.");
+        }
+        else
+        {
+            logMessageBuilder.Append(
+                String.Format("The EntityIdResponse ID value was {0}", response.Response.Value.Get().Value));
+        }
+
+        connection.SendLogMessage(LogLevel.Warn, LoggerName, logMessageBuilder.ToString());
+      }
+      else
+      {
+        planetId = response.Response.Value.Get().Value.planetId;
+        var logMessage = String.Format("Assigned Planet with EntityId {0} to this client", planetId.Id);
+      
+        Console.WriteLine(logMessage);
+        connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
       }
     }
   }

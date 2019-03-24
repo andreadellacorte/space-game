@@ -3,7 +3,7 @@ package demo;
 
 component PlanetInfo {
 	id = 101;
-	EntityId player = 1;
+	string player_id = 1;
 	string name = 2;
 	uint32 minerals = 3;
 }
