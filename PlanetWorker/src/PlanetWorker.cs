@@ -2,7 +2,10 @@
 
 using System;
 using System.Reflection;
+using System.Collections.Generic;
+using Improbable;
 using Improbable.Worker;
+using Improbable.Collections;
 
 namespace Demo
 {
@@ -14,6 +17,14 @@ namespace Demo
     private const int ErrorExitStatus = 1;
     private const uint GetOpListTimeoutInMilliseconds = 100;
     private const string playerType = "Player";
+    
+    private class ViewEntity
+    {
+        public bool hasAuthority;
+        public Entity entity;
+    }
+
+    private static Dictionary<EntityId, ViewEntity> EntityView = new Dictionary<EntityId, ViewEntity>();
 
     static int Main(string[] arguments)
     {
@@ -33,6 +44,7 @@ namespace Demo
       }
 
       Console.WriteLine("Worker Starting...");
+      
       using (var connection = ConnectWorker(arguments))
       {
         using (var dispatcher = new Dispatcher())
@@ -54,6 +66,69 @@ namespace Demo
               Console.Error.WriteLine("Fatal error: {0}", op.Message);
               Environment.Exit(ErrorExitStatus);
             }
+          });
+          
+          dispatcher.OnAuthorityChange<PlanetInfo>(op =>
+          {
+            ViewEntity entity;
+            if (EntityView.TryGetValue(op.EntityId, out entity))
+            {
+              if(op.Authority == Authority.Authoritative)
+              {
+                  entity.hasAuthority = true;
+              }
+              else if (op.Authority == Authority.NotAuthoritative)
+              {
+                  entity.hasAuthority = false;
+              }
+              else if (op.Authority == Authority.AuthorityLossImminent)
+              {
+                  entity.hasAuthority = false;
+              }
+            }
+          });
+          
+          dispatcher.OnAddComponent<PlanetInfo>(op =>
+          {
+            ViewEntity entity;
+            if (EntityView.TryGetValue(op.EntityId, out entity))
+            {
+                entity.entity.Add<PlanetInfo>(op.Data);
+            }
+            else
+            {
+                ViewEntity newEntity = new ViewEntity();
+                EntityView.Add(op.EntityId, newEntity);
+                newEntity.entity.Add<PlanetInfo>(op.Data);
+            }
+          });
+          
+          dispatcher.OnComponentUpdate<PlanetInfo>(op=>
+          {
+            ViewEntity entity;
+            if (EntityView.TryGetValue(op.EntityId, out entity))
+            {
+                var update = op.Update.Get();
+                entity.entity.Update<PlanetInfo>(update);
+            }
+          });
+          
+          dispatcher.OnAddEntity(op =>
+          {
+            // AddEntity will always be followed by OnAddComponent
+            ViewEntity newEntity = new ViewEntity();
+            newEntity.hasAuthority = true;
+            newEntity.entity = new Entity();
+            ViewEntity oldEntity;
+            if(!EntityView.TryGetValue(op.EntityId, out oldEntity))
+            {
+              EntityView.Add(op.EntityId, newEntity);
+            }
+          });
+          
+          dispatcher.OnRemoveEntity(op =>
+          {
+            EntityView.Remove(op.EntityId);
           });
           
           var entityIdReservationRequestId = default(RequestId<ReserveEntityIdsRequest>);
@@ -81,6 +156,34 @@ namespace Demo
             if (op.RequestId == entityCreationRequestId && op.StatusCode == StatusCode.Success)
             {
               Console.WriteLine("Success!");
+              
+              foreach (KeyValuePair<EntityId, ViewEntity> pair in EntityView)
+              {
+                Option<IComponentData<PlanetInfo>> option;
+                IComponentData<PlanetInfo> planetInfo;
+                PlanetInfo.Data planetInfoData;
+                PlanetInfoData pid;
+
+                option = pair.Value.entity.Get<PlanetInfo>();
+                planetInfo = option.Value;
+                planetInfoData = planetInfo.Get();
+                pid = planetInfoData.Value;
+                
+                if(pid.player.Id == 0)
+                {
+                  var id = pair.Key;
+                  
+                  //Create new component update object
+                  PlanetInfo.Update piu = new PlanetInfo.Update();
+                  
+                  piu.SetPlayer(new EntityId(6));
+                  
+                  //Send the updates
+                  connection.SendComponentUpdate<PlanetInfo>(id, piu);
+                  
+                  break;
+                }
+              }
             }
             
             Console.WriteLine("Failed for some reason");
@@ -88,7 +191,7 @@ namespace Demo
 
           dispatcher.OnCommandRequest<AssignPlanetResponder.Commands.AssignPlanet>(request =>
           {
-              connection.SendLogMessage(LogLevel.Info, LoggerName, "Received GetWorkerType command");
+              connection.SendLogMessage(LogLevel.Info, LoggerName, "Received AssignPlanet command");
               
               entityIdReservationRequestId = connection.SendReserveEntityIdsRequest(1, timeoutMillis);
               

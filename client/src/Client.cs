@@ -21,6 +21,7 @@ namespace Demo
     private const uint CommandRequestTimeoutMS = 100;
     private const int pingIntervalMs = 5000;
     
+    private static readonly Random random = new Random();
     private static string workerId;
     
     private static readonly EntityId[] PlanetAuthorityMarkersEntityIds =
@@ -54,8 +55,6 @@ namespace Demo
         using (var dispatcher = new Dispatcher())
         {
           var isConnected = true;
-          
-          var authorityMarkers = new HashSet<EntityId>(PlanetAuthorityMarkersEntityIds);
 
           dispatcher.OnDisconnect(op =>
           {
@@ -84,11 +83,8 @@ namespace Demo
             
           AssignPlanetResponder.Commands.AssignPlanet.Request assignPlanet =
             new AssignPlanetResponder.Commands.AssignPlanet.Request(new AssignPlanetRequest());
-            
-          foreach (var entityId in authorityMarkers)
-          {
-              connection.SendCommandRequest(entityId, assignPlanet, CommandRequestTimeoutMS, null);
-          }
+
+          connection.SendCommandRequest(PlanetAuthorityMarkersEntityIds[random.Next(PlanetAuthorityMarkersEntityIds.Length)], assignPlanet, CommandRequestTimeoutMS, null);
           
           // UX Thread to read from CLI
           new Thread(() =>
@@ -132,48 +128,5 @@ namespace Demo
         return future.Get();
       }
     }
-
-    // private static void HandlePong(
-    //     CommandResponseOp<PingResponder.Commands.Ping> response, Connection connection)
-    // {
-    //     if (response.StatusCode != StatusCode.Success)
-    //     {
-    //         StringBuilder logMessageBuilder = new StringBuilder();
-    //         logMessageBuilder.Append(
-    //             String.Format("Received invalid OnCommandResponse for request ID {0} with status code {1} to entity with ID {2}.", response.RequestId, response.StatusCode, response.EntityId));
-    //         if (!string.IsNullOrEmpty(response.Message))
-    //         {
-    //             logMessageBuilder.Append(String.Format("The message was \'{0}\'.", response.Message));
-    //         }
-    //
-    //         if (!response.Response.HasValue)
-    //         {
-    //             logMessageBuilder.Append("The response was missing.");
-    //         }
-    //         else
-    //         {
-    //             logMessageBuilder.Append(
-    //                 String.Format("The EntityIdResponse ID value was {0}", response.Response.Value.Get().Value));
-    //         }
-    //
-    //         connection.SendLogMessage(LogLevel.Warn, LoggerName, logMessageBuilder.ToString());
-    //     }
-    //     else
-    //     {
-    //         var workerType = response.Response.Value.Get().Value.workerType;
-    //         var workerMessage = response.Response.Value.Get().Value.workerMessage;
-    //         var logMessage = String.Format("New Response: {0} says \"{1}\"", workerType, workerMessage);
-    //
-    //         Console.WriteLine(logMessage);
-    //         connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
-    //     }
-    // }
-
-    // private static void SendGetWorkerTypeCommand(Connection connection, EntityId entityId)
-    // {
-    //     PingResponder.Commands.Ping.Request ping =
-    //         new PingResponder.Commands.Ping.Request(new PingRequest());
-    //     connection.SendCommandRequest(entityId, ping, CommandRequestTimeoutMS, null);
-    // }
   }
 }

@@ -20,6 +20,7 @@ namespace Demo
     private const string LoggerName = "SnapshotGenerator.cs";
     private static readonly string[] WorkerLayers = {"planets"};
     private static readonly int[] WorkerLocations = {-250, 250};
+    private static readonly int[] PlanetLocations = {-400, -350, -300, -250, -200, -150, -100, -50, 50, 100, 150, 200, 250, 300, 350, 400};
     
     static int Main(string[] arguments)
     {
@@ -69,16 +70,25 @@ namespace Demo
         }
         
         // Create one planet
-        entity = createPlanet();
-        error = snapshotOutput.WriteEntity(new EntityId(entityId), entity);
-        if (error.HasValue)
+        for (var x = 0; x < PlanetLocations.Length; x++)
         {
-            throw new System.SystemException("error saving: " + error.Value);
+          for (var z = 0; z < PlanetLocations.Length; z++)
+          {
+            entity = createPlanet(PlanetLocations[x], PlanetLocations[z]);
+            
+            error = snapshotOutput.WriteEntity(new EntityId(entityId), entity);
+            if (error.HasValue)
+            {
+                throw new System.SystemException("error saving: " + error.Value);
+            }
+
+            entityId++;
+          }
         }
       }
     }
     
-    private static Entity createPlanet()
+    private static Entity createPlanet(int x, int z)
     {
       var entity = new Entity();
       const string entityType = "Planet";
@@ -111,7 +121,7 @@ namespace Demo
       // Needed for the entity to be persisted in snapshots.
       entity.Add(new Persistence.Data());
       entity.Add(new Metadata.Data(entityType));
-      entity.Add(new Position.Data(new Coordinates(0, 0, 0)));
+      entity.Add(new Position.Data(new Coordinates(x, 0, z)));
       entity.Add(new PlanetInfo.Data(new EntityId(0), "Planet Name", 0));
       return entity;
     }
