@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# This script builds the Client worker executable to client/bin
+# This script builds the workers executable to folder/bin
 
 set -e -x
 source ../SpatialOS/scripts/utils.sh

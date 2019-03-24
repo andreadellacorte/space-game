@@ -16,6 +16,10 @@ namespace Demo
 {
   class SnapshotGenerator
   {
+    private const int ErrorExitStatus = 1;
+    private const string LoggerName = "SnapshotGenerator.cs";
+    private static readonly string[] WorkerAttributes = {"planets"};
+    
     static int Main(string[] arguments)
     {
       Action printUsage = () =>
@@ -32,9 +36,11 @@ namespace Demo
       }
 
       GenerateSnapshot(arguments[0], WorkerAttributes);
+      
+      return 0;
     }
     
-    public void GenerateSnapshot(string snapshotPath, string[] workers)
+    public static void GenerateSnapshot(string snapshotPath, string[] workers)
     {
         Console.WriteLine(String.Format("Generating snapshot file {0}", snapshotPath));
         using (var snapshotOutput = new SnapshotOutputStream(snapshotPath))
@@ -66,7 +72,7 @@ namespace Demo
         }
     }
     
-    private Entity createPlanet()
+    private static Entity createPlanet()
     {
         var entity = new Entity();
         const string entityType = "Planet";
@@ -104,7 +110,7 @@ namespace Demo
         return entity;
     }
 
-    private Entity createAuthorityMarker(string workerType)
+    private static Entity createAuthorityMarker(string workerType)
     {
         var entity = new Entity();
         const string entityType = "AuthorityMarker";

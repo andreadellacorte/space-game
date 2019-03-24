@@ -15,7 +15,6 @@ namespace Demo
   class Client
   {
     private const uint timeoutMillis = 500u;
-    private const string ProjectName = "Demo";
     private const string WorkerType = "InteractiveClient";
     private const string LoggerName = "Client.cs";
     private const int ErrorExitStatus = 1;
@@ -23,13 +22,6 @@ namespace Demo
     private const uint CommandRequestTimeoutMS = 100;
     private const int pingIntervalMs = 5000;
     private const string playerType = "Player";
-
-    private static readonly EntityId[] EntityIds =
-    {
-      new EntityId(1)
-    };
-
-    private static readonly string[] WorkerAttributes = {"planets"};
 
     static int Main(string[] arguments)
     {
@@ -57,7 +49,7 @@ namespace Demo
           watch.Start();
 
           var isConnected = true;
-          var entitiesToRespond = new HashSet<EntityId>(EntityIds);
+          
 
           dispatcher.OnDisconnect(op =>
           {
