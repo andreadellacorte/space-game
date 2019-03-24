@@ -19,7 +19,7 @@ namespace Demo
     private const int ErrorExitStatus = 1;
     private const string LoggerName = "SnapshotGenerator.cs";
     private static readonly string[] WorkerLayers = {"planets"};
-    private static readonly int[] WorkerLocations = {250, 750};
+    private static readonly int[] WorkerLocations = {-250, 250};
     
     static int Main(string[] arguments)
     {
@@ -54,9 +54,9 @@ namespace Demo
         {
           for (var x = 0; x < workerLocations.Length; x++)
           {
-            for (var y = 0; y < workerLocations.Length; y++)
+            for (var z = 0; z < workerLocations.Length; z++)
             {
-              entity = createAuthorityMarker(workerLayers[l], workerLocations[x], workerLocations[y]);
+              entity = createAuthorityMarker(workerLayers[l], workerLocations[x], workerLocations[z]);
               error = snapshotOutput.WriteEntity(new EntityId(entityId), entity);
               if (error.HasValue)
               {
@@ -116,7 +116,7 @@ namespace Demo
       return entity;
     }
 
-    private static Entity createAuthorityMarker(string workerType, int x, int y)
+    private static Entity createAuthorityMarker(string workerType, int x, int z)
     {
       var entity = new Entity();
       const string entityType = "AuthorityMarker";
@@ -149,7 +149,7 @@ namespace Demo
       // Needed for the entity to be persisted in snapshots.
       entity.Add(new Persistence.Data());
       entity.Add(new Metadata.Data(entityType));
-      entity.Add(new Position.Data(new Coordinates(x, y, 0)));
+      entity.Add(new Position.Data(new Coordinates(x, 0, z)));
       return entity;
     }
   }
