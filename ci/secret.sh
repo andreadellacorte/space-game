@@ -3,7 +3,7 @@
 set -e
 set -u
 
-openssl aes-256-cbc -K $encrypted_93597bdefda6_key -iv $encrypted_93597bdefda6_iv -in secrets.tar.enc -out secrets.tar -d
+openssl aes-256-cbc -K $encrypted_555b11e18606_key -iv $encrypted_555b11e18606_iv -in secrets.tar.enc -out secrets.tar -d
 
 mkdir -p ~/.improbable/oauth2
 
