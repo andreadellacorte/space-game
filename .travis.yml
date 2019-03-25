@@ -1,17 +1,18 @@
 os: osx
 env:
   global:
-    - HOMEBREW_FOLDER=$HOME/Library/Caches/Homebrew
     - DEPLOYMENT_NAME=spacegame
     - DEPLOYMENT_TTL=ttl_1_hours
     - ASSEMBLY_NAME=spacegame_$TRAVIS_JOB_NUMBER
 cache:
   timeout: 3600
   directories:
-    - "$HOMEBREW_FOLDER"
+    - $HOME/Library/Caches/Homebrew
 notifications:
   email:
     - andrea@improbable.io
+before_cache:
+  - brew cleanup
 before_install:
   - chmod a+x ./ci/secret.sh
   - chmod a+x ./ci/install.sh
