@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
-set -u
+set -e -u
 
 brew tap caskroom/cask
 brew update >/dev/null

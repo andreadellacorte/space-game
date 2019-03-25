@@ -3,7 +3,8 @@
 # This script converts a binary snapshot file to its text format representation
 # Usage: convert_snapshot.sh <binary snapshot file name, optional, default value: "default.snapshot"> <text snapshot file name, optional, default value: "default.txt">
 
-set -e
+set -e -u
+
 pushd "$( dirname "${BASH_SOURCE[0]}" )"
 source ./utils.sh
 

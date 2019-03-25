@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
-set -u
+set -e -u
 
 openssl aes-256-cbc -K $encrypted_555b11e18606_key -iv $encrypted_555b11e18606_iv -in secrets.tar.enc -out secrets.tar -d
 

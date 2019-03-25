@@ -2,7 +2,8 @@
 
 # This script builds the full project by running all other provided shell scripts in sequence
 
-set -e
+set -e -u
+
 pushd "$( dirname "${BASH_SOURCE[0]}" )"
 source ./utils.sh
 
