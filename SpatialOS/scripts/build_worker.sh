@@ -2,7 +2,7 @@
 
 # This script builds the workers executable to folder/bin
 
-set -e -x
+set -e
 source ../SpatialOS/scripts/utils.sh
 
 # Download the dependenties in case they are not present
