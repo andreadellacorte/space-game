@@ -5,7 +5,7 @@ set -u
 
 pushd "$( dirname "${BASH_SOURCE[0]}" )"
 
-# travis login --com
+travis login --auto-token --com
 
 cp ~/.improbable/oauth2/* .
 
