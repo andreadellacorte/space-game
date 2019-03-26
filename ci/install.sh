@@ -2,11 +2,10 @@
 
 set -e -u -x
 
-echo "HOMEBREW_FORCE_VENDOR_RUBY is set to:"
-echo $HOMEBREW_FORCE_VENDOR_RUBY
-
+brew doctor
+brew config
 brew tap caskroom/cask
-rvm $brew_ruby do brew update 1>/dev/null
+brew update
 brew cask install spatial
 
 brew install mono
@@ -21,3 +20,5 @@ then
   echo "ERROR: dotnet sdk not found"
   exit 1
 fi
+
+brew doctor
