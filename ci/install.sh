@@ -2,11 +2,11 @@
 
 set -e -u -x
 
-rvm --default use 2.3.7
+rvm use 2.3.7
 
 brew config
 brew tap caskroom/cask
-brew update
+brew update --debug --verbose
 brew cask install spatial
 
 brew install mono
