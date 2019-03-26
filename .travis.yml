@@ -1,6 +1,4 @@
 os: osx
-rvm:
-  - 2.3.7
 env:
   global:
     - DEPLOYMENT_NAME=spacegame
@@ -15,7 +13,6 @@ notifications:
   email:
     - andrea@improbable.io
 before_install:
-  - rvm --default use 2.3.7
   - chmod a+x ./ci/deploy_secret.sh
   - chmod a+x ./ci/install.sh
   - chmod a+x ./ci/tear_down.sh

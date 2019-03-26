@@ -2,9 +2,6 @@
 
 set -e -u -x
 
-echo $PATH
-which ruby
-
 brew doctor
 brew config
 brew tap caskroom/cask
