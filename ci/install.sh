@@ -3,7 +3,7 @@
 set -e -u -x
 
 brew doctor
-brew update --debug --verbose
+brew update --verbose
 brew doctor
 brew tap caskroom/cask
 brew cask install spatial
