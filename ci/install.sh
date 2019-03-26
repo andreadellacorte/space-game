@@ -2,8 +2,10 @@
 
 set -e -u -x
 
+brew doctor
+brew update --debug --verbose
+brew doctor
 brew tap caskroom/cask
-brew update
 brew cask install spatial
 
 brew install mono
