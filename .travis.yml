@@ -1,9 +1,12 @@
 os: osx
+rvm:
+  - 2.3.7
 env:
   global:
     - DEPLOYMENT_NAME=spacegame
     - DEPLOYMENT_TTL=ttl_1_hours
     - ASSEMBLY_NAME=spacegame_$TRAVIS_JOB_NUMBER
+    - PATH="/usr/local/opt/ruby/bin:$PATH"
 cache:
   timeout: 3600
   directories:
@@ -11,9 +14,8 @@ cache:
 notifications:
   email:
     - andrea@improbable.io
-before_cache:
-  - brew cleanup
 before_install:
+  - rvm --default use 2.3.7
   - chmod a+x ./ci/deploy_secret.sh
   - chmod a+x ./ci/install.sh
   - chmod a+x ./ci/tear_down.sh
@@ -31,3 +33,5 @@ script:
   - if [ $TRAVIS_TEST_RESULT -eq 0 ]; then ./ci/test_cloud.sh; fi
 after_script:
   - curl --upload-file $(ls -t $TRAVIS_BUILD_DIR/SpatialOS/logs/spatial_* | head -n 1) "https://transfer.sh/spatial_$TRAVIS_BUILD_NUMBER.log"
+before_cache:
+  - brew cleanup
