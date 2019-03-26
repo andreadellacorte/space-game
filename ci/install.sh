@@ -2,11 +2,8 @@
 
 set -e -u -x
 
-echo "HOMEBREW_FORCE_VENDOR_RUBY is set to:"
-echo $HOMEBREW_FORCE_VENDOR_RUBY
-
 brew tap caskroom/cask
-rvm $brew_ruby do brew update 1>/dev/null
+rvm . do brew update --debug --verbose
 brew cask install spatial
 
 brew install mono

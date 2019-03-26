@@ -9,9 +9,6 @@ cache:
   timeout: 3600
   directories:
     - $HOME/Library/Caches/Homebrew
-addons:
-  homebrew:
-    update: true
 notifications:
   email:
     - andrea@improbable.io
