@@ -21,6 +21,7 @@ namespace Demo
     private static readonly string[] WorkerLayers = {"planets"};
     private static readonly int[] WorkerLocations = {-250, 250};
     private static readonly int[] PlanetLocations = {-400, -350, -300, -250, -200, -150, -100, -50, 50, 100, 150, 200, 250, 300, 350, 400};
+    private static readonly Random random = new Random();
     
     static int Main(string[] arguments)
     {
@@ -121,7 +122,7 @@ namespace Demo
       entity.Add(new Persistence.Data());
       entity.Add(new Metadata.Data(entityType));
       entity.Add(new Position.Data(new Coordinates(x, 0, z)));
-      entity.Add(new PlanetInfo.Data("", "Planet Name", 0));
+      entity.Add(new PlanetInfo.Data(StarName.Generate(random),"", "Planet Name", 0));
       return entity;
     }
 
