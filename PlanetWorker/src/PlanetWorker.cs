@@ -2,20 +2,30 @@
 
 using System;
 using System.Reflection;
+using System.Collections.Generic;
+using Improbable;
 using Improbable.Worker;
+using Improbable.Collections;
 
 namespace Demo
 {
   class PlanetWorker
   {
+    private const uint timeoutMillis = 500u;
     private const string WorkerType = "PlanetWorker";
     private const string LoggerName = "PlanetWorker.cs";
     private const int ErrorExitStatus = 1;
     private const uint GetOpListTimeoutInMilliseconds = 100;
-    private static readonly string[] hellos = {
-      "Hello", "Bonjour", "Ciao", "Guten Tag", "nĭ hăo" // A selection of Greetings in arbitrary languages
-    };
-    private static readonly Random random = new Random();
+    private const string playerType = "Player";
+    
+    private class ViewEntity
+    {
+        public bool hasAuthority;
+        public bool isPlanet;
+        public Entity entity;
+    }
+
+    private static Dictionary<EntityId, ViewEntity> EntityView = new Dictionary<EntityId, ViewEntity>();
 
     static int Main(string[] arguments)
     {
@@ -27,6 +37,7 @@ namespace Demo
         Console.WriteLine("    <port>          - port to use.");
         Console.WriteLine("    <worker_id>     - name of the worker assigned by SpatialOS.");
       };
+
       if (arguments.Length < 3)
       {
         printUsage();
@@ -34,6 +45,7 @@ namespace Demo
       }
 
       Console.WriteLine("Worker Starting...");
+      
       using (var connection = ConnectWorker(arguments))
       {
         using (var dispatcher = new Dispatcher())
@@ -56,19 +68,144 @@ namespace Demo
               Environment.Exit(ErrorExitStatus);
             }
           });
+          
+          dispatcher.OnAuthorityChange<PlanetInfo>(op =>
+          {
+            string logMessage;
 
-          // dispatcher.OnCommandRequest<PingResponder.Commands.Ping>(request =>
-          // {
-          //     connection.SendLogMessage(LogLevel.Info, LoggerName, "Received GetWorkerType command");
-          //
-          //     var greeting = hellos[random.Next(hellos.Length)];
-          //     var pingResponse = new Pong(WorkerType, String.Format("{0}, World!", greeting));
-          //     var commandResponse = new PingResponder.Commands.Ping.Response(pingResponse);
-          //     connection.SendCommandResponse(request.RequestId, commandResponse);
-          // });
+            ViewEntity entity;
+            if (EntityView.TryGetValue(op.EntityId, out entity))
+            {
+              if(op.Authority == Authority.Authoritative)
+              {
+                logMessage = String.Format("Gained authority over entityId {0}", op.EntityId);
+                connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+                entity.hasAuthority = true;
+              }
+              else if (op.Authority == Authority.NotAuthoritative)
+              {
+                logMessage = String.Format("Lost authority over entityId {0}", op.EntityId);
+                connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+                entity.hasAuthority = false;
+              }
+              else if (op.Authority == Authority.AuthorityLossImminent)
+              {
+                logMessage = String.Format("Lost authority over entityId {0}", op.EntityId);
+                connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+                entity.hasAuthority = false;
+              }
+            }
+          });
+          
+          dispatcher.OnAddComponent<PlanetInfo>(op =>
+          {
+            var logMessage = String.Format("Adding PlanetInfo Component for entityId {0}", op.EntityId);
+            connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+
+            ViewEntity entity;
+            if (EntityView.TryGetValue(op.EntityId, out entity))
+            {
+                entity.entity.Add<PlanetInfo>(op.Data);
+                entity.isPlanet = true;
+            }
+            else
+            {
+                ViewEntity newEntity = new ViewEntity();
+                EntityView.Add(op.EntityId, newEntity);
+                newEntity.entity.Add<PlanetInfo>(op.Data);
+                newEntity.isPlanet = true;
+            }
+          });
+          
+          dispatcher.OnComponentUpdate<PlanetInfo>(op=>
+          {
+            var logMessage = String.Format("Updating PlanetInfo Component for entityId {0}", op.EntityId);
+            connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+
+            ViewEntity entity;
+            if (EntityView.TryGetValue(op.EntityId, out entity))
+            {
+                var update = op.Update.Get();
+                entity.entity.Update<PlanetInfo>(update);
+            }
+          });
+          
+          dispatcher.OnAddEntity(op =>
+          {
+            var logMessage = String.Format("Adding entityId {0}", op.EntityId);
+            connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+
+            // AddEntity will always be followed by OnAddComponent
+            ViewEntity newEntity = new ViewEntity();
+            newEntity.hasAuthority = false;
+            newEntity.entity = new Entity();
+            EntityView.Add(op.EntityId, newEntity);
+          });
+          
+          dispatcher.OnRemoveEntity(op =>
+          {
+            EntityView.Remove(op.EntityId);
+          });
+
+          dispatcher.OnCommandRequest<AssignPlanetResponder.Commands.AssignPlanet>(request =>
+          {
+            var logMessage = String.Format("Received AssignPlanet command from player {0}", request.Request.Get().Value.playerId);
+            connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+            
+            var planetAssigned = false;
+              
+            foreach (KeyValuePair<EntityId, ViewEntity> pair in EntityView)
+            {
+              if(!pair.Value.hasAuthority || !pair.Value.isPlanet)
+              {
+                logMessage = String.Format("Skipping entity with entityId {0}", pair.Key);
+                connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+                continue;
+              }
+              
+              logMessage = String.Format("Picked planet with entityId {0} because I have authority", pair.Key);
+              connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+              
+              logMessage = String.Format("Entity.PlanetInfo: {0}", pair.Value.entity.Get<PlanetInfo>());
+              connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+              
+              PlanetInfoData planetInfoData = pair.Value.entity.Get<PlanetInfo>().Value.Get().Value;
+              
+              logMessage = String.Format("Entity {0} has playerId {1}", pair.Key, planetInfoData.playerId);
+              connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+              
+              if(planetInfoData.playerId == "")
+              {
+                var planetId = pair.Key;
+                var playerId = request.Request.Get().Value.playerId;
+                
+                //Create new component update object
+                PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
+                planetInfoUpdate.SetPlayerId(playerId);
+                
+                // Send the updates
+                connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
+                
+                // Send the assigned planet to the client
+                var assignPlanetResponse = new AssignPlanetResponse(planetId);
+                var commandResponse = new AssignPlanetResponder.Commands.AssignPlanet.Response(assignPlanetResponse);
+                connection.SendCommandResponse(request.RequestId, commandResponse);
+                
+                planetAssigned = true;
+                
+                break;
+              }
+              
+              if(!planetAssigned){
+                logMessage = String.Format("No planets available for player {0}", request.Request.Get().Value.playerId);
+                throw new SystemException(logMessage);
+              }
+            }
+          });
 
           connection.SendLogMessage(LogLevel.Info, LoggerName,
             "Successfully connected using TCP and the Receptionist");
+
           while (isConnected)
           {
             using (var opList = connection.GetOpList(GetOpListTimeoutInMilliseconds))

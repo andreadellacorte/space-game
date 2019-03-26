@@ -17,6 +17,9 @@ for WORKER_DIR in "${WORKER_DIRS[@]}"; do
   popd
 done
 
-echo "Build complete."
+echo "Regenerating snapshot."
+../../SnapshotGenerator/run.sh
 
 popd
+
+echo "Build complete."

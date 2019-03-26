@@ -14,14 +14,24 @@ namespace Demo
 {
   class Client
   {
-    private const uint timeoutMillis = 500u;
     private const string WorkerType = "InteractiveClient";
     private const string LoggerName = "Client.cs";
     private const int ErrorExitStatus = 1;
     private const uint GetOpListTimeoutInMilliseconds = 100;
     private const uint CommandRequestTimeoutMS = 100;
     private const int pingIntervalMs = 5000;
-    private const string playerType = "Player";
+    
+    private static readonly Random random = new Random();
+    private static string playerId;
+    private static EntityId planetId;
+    
+    private static readonly EntityId[] PlanetAuthorityMarkersEntityIds =
+    {
+      new EntityId(1),
+      new EntityId(2),
+      new EntityId(3),
+      new EntityId(4)
+    };
 
     static int Main(string[] arguments)
     {
@@ -45,11 +55,7 @@ namespace Demo
       {
         using (var dispatcher = new Dispatcher())
         {
-          var watch = new Stopwatch();
-          watch.Start();
-
           var isConnected = true;
-          
 
           dispatcher.OnDisconnect(op =>
           {
@@ -72,49 +78,19 @@ namespace Demo
           {
             Console.WriteLine("authority change {0}", cb.Authority);
           });
-
-          // dispatcher.OnCommandResponse<PingResponder.Commands.Ping>(response =>
-          // {
-          //     HandlePong(response, connection);
-          // });
-
-          connection.SendLogMessage(LogLevel.Info, LoggerName,
-            "Successfully connected using TCP and the Receptionist");
-         
-          // Reserve an entity ID.
-          var entityIdReservationRequestId = default(RequestId<ReserveEntityIdsRequest>);
-
-          // When the reservation succeeds, create an entity with the reserved ID.
-          var entityCreationRequestId = default(RequestId<CreateEntityRequest>);
-            
-          dispatcher.OnReserveEntityIdsResponse(op =>
+          
+          dispatcher.OnCommandResponse<AssignPlanetResponder.Commands.AssignPlanet>(response =>
           {
-            Console.WriteLine("RequestId " + op.RequestId);
-            Console.WriteLine("entityIdReservationRequestId " + entityIdReservationRequestId);
-            Console.WriteLine("op.StatusCode " + op.StatusCode);
-            Console.WriteLine("Status.Success" + StatusCode.Success);
-            if (op.RequestId == entityIdReservationRequestId && op.StatusCode == StatusCode.Success)
-            {
-              var entity = new Entity();
-              // Empty ACL - should be customised.
-              entity.Add(new Improbable.EntityAcl.Data(
-                new Improbable.WorkerRequirementSet(new Improbable.Collections.List<Improbable.WorkerAttributeSet>()),
-                new Improbable.Collections.Map<uint, Improbable.WorkerRequirementSet>()));
-              // Needed for the entity to be persisted in snapshots.
-              entity.Add(new Improbable.Persistence.Data());
-              entity.Add(new Improbable.Metadata.Data(playerType));
-              entity.Add(new Improbable.Position.Data(new Improbable.Coordinates(1, 2, 3)));
-              entityCreationRequestId = connection.SendCreateEntityRequest(entity, op.FirstEntityId, timeoutMillis);
-            }
+              HandleAssignPlanet(response, connection);
           });
 
-          // dispatcher.OnCommandResponse<PingResponder.Commands.Ping>(response =>
-          // {
-          //     HandlePong(response, connection);
-          // });
-
           connection.SendLogMessage(LogLevel.Info, LoggerName,
             "Successfully connected using TCP and the Receptionist");
+            
+          AssignPlanetResponder.Commands.AssignPlanet.Request assignPlanet =
+            new AssignPlanetResponder.Commands.AssignPlanet.Request(new AssignPlanetRequest(playerId));
+
+          connection.SendCommandRequest(PlanetAuthorityMarkersEntityIds[random.Next(PlanetAuthorityMarkersEntityIds.Length)], assignPlanet, CommandRequestTimeoutMS, null);
           
           // UX Thread to read from CLI
           new Thread(() =>
@@ -123,8 +99,17 @@ namespace Demo
             {
               Thread.CurrentThread.IsBackground = true;
               string s = Console.ReadLine();
-
-              entityIdReservationRequestId = connection.SendReserveEntityIdsRequest(1, timeoutMillis);
+              Console.WriteLine("Please enter your command:");
+              Console.WriteLine("1. Build mine");
+              
+              if(s == "1")
+              {
+                Console.WriteLine("PRRR, new mine built.");
+              }
+              else
+              {
+                Console.WriteLine("No idea about that command, sorry.");
+              }
             }
           }).Start();
           
@@ -144,58 +129,49 @@ namespace Demo
     {
       string hostname = arguments[0];
       ushort port = Convert.ToUInt16(arguments[1]);
-      string workerId = arguments[2];
+      playerId = arguments[2];
       var connectionParameters = new ConnectionParameters();
       connectionParameters.WorkerType = WorkerType;
       connectionParameters.Network.ConnectionType = NetworkConnectionType.Tcp;
 
-      using (var future = Connection.ConnectAsync(hostname, port, workerId, connectionParameters))
+      using (var future = Connection.ConnectAsync(hostname, port, playerId, connectionParameters))
       {
         return future.Get();
       }
     }
+    
+    private static void HandleAssignPlanet(CommandResponseOp<AssignPlanetResponder.Commands.AssignPlanet> response, Connection connection)
+    {
+      if (response.StatusCode != StatusCode.Success)
+      {
+        StringBuilder logMessageBuilder = new StringBuilder();
+        logMessageBuilder.Append(
+            String.Format("Received invalid OnCommandResponse for request ID {0} with status code {1} to entity with ID {2}.", response.RequestId, response.StatusCode, response.EntityId));
+        if (!string.IsNullOrEmpty(response.Message))
+        {
+            logMessageBuilder.Append(String.Format("The message was \'{0}\'.", response.Message));
+        }
 
-    // private static void HandlePong(
-    //     CommandResponseOp<PingResponder.Commands.Ping> response, Connection connection)
-    // {
-    //     if (response.StatusCode != StatusCode.Success)
-    //     {
-    //         StringBuilder logMessageBuilder = new StringBuilder();
-    //         logMessageBuilder.Append(
-    //             String.Format("Received invalid OnCommandResponse for request ID {0} with status code {1} to entity with ID {2}.", response.RequestId, response.StatusCode, response.EntityId));
-    //         if (!string.IsNullOrEmpty(response.Message))
-    //         {
-    //             logMessageBuilder.Append(String.Format("The message was \'{0}\'.", response.Message));
-    //         }
-    //
-    //         if (!response.Response.HasValue)
-    //         {
-    //             logMessageBuilder.Append("The response was missing.");
-    //         }
-    //         else
-    //         {
-    //             logMessageBuilder.Append(
-    //                 String.Format("The EntityIdResponse ID value was {0}", response.Response.Value.Get().Value));
-    //         }
-    //
-    //         connection.SendLogMessage(LogLevel.Warn, LoggerName, logMessageBuilder.ToString());
-    //     }
-    //     else
-    //     {
-    //         var workerType = response.Response.Value.Get().Value.workerType;
-    //         var workerMessage = response.Response.Value.Get().Value.workerMessage;
-    //         var logMessage = String.Format("New Response: {0} says \"{1}\"", workerType, workerMessage);
-    //
-    //         Console.WriteLine(logMessage);
-    //         connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
-    //     }
-    // }
+        if (!response.Response.HasValue)
+        {
+            logMessageBuilder.Append("The response was missing.");
+        }
+        else
+        {
+            logMessageBuilder.Append(
+                String.Format("The EntityIdResponse ID value was {0}", response.Response.Value.Get().Value));
+        }
 
-    // private static void SendGetWorkerTypeCommand(Connection connection, EntityId entityId)
-    // {
-    //     PingResponder.Commands.Ping.Request ping =
-    //         new PingResponder.Commands.Ping.Request(new PingRequest());
-    //     connection.SendCommandRequest(entityId, ping, CommandRequestTimeoutMS, null);
-    // }
+        connection.SendLogMessage(LogLevel.Warn, LoggerName, logMessageBuilder.ToString());
+      }
+      else
+      {
+        planetId = response.Response.Value.Get().Value.planetId;
+        var logMessage = String.Format("Assigned Planet with EntityId {0} to this client", planetId.Id);
+      
+        Console.WriteLine(logMessage);
+        connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+      }
+    }
   }
 }

@@ -3,6 +3,20 @@ package demo;
 
 component PlanetInfo {
 	id = 101;
-	string name = 1;
-	uint32 minerals = 2;
+	string player_id = 1;
+	string name = 2;
+	uint32 minerals = 3;
+}
+
+type AssignPlanetResponse {
+	EntityId planet_id = 1;
+}
+
+type AssignPlanetRequest {
+	string player_id = 1;
+}
+
+component AssignPlanetResponder {
+  id = 102;
+  command AssignPlanetResponse assign_planet(AssignPlanetRequest);
 }

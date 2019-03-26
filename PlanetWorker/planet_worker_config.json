@@ -55,5 +55,10 @@
         ]
       }
     }
+  },
+  "permissions": {
+    "entity_creation": {
+        "allow": true
+    }
   }
 }
