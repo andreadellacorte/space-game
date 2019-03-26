@@ -2,8 +2,10 @@
 
 set -e -u -x
 
+rvm 2.3.7 do brew update --debug --verbose
+
 brew tap caskroom/cask
-rvm . do brew update --debug --verbose
+rvm 2.3.7 do brew update --debug --verbose
 brew cask install spatial
 
 brew install mono

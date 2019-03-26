@@ -1,4 +1,6 @@
 os: osx
+rvm:
+  - 2.3.7
 env:
   global:
     - DEPLOYMENT_NAME=spacegame
