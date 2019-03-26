@@ -8,6 +8,7 @@ cache:
   timeout: 3600
   directories:
     - $HOME/Library/Caches/Homebrew
+    - /usr/local/Homebrew/Library/Homebrew/vendor/portable-ruby/2.3.7
 notifications:
   email:
     - andrea@improbable.io
