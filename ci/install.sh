@@ -2,7 +2,6 @@
 
 set -e -u -x
 
-brew doctor || true
 brew config
 brew tap caskroom/cask
 brew update
@@ -21,4 +20,4 @@ then
   exit 1
 fi
 
-brew doctor || true
+brew config
