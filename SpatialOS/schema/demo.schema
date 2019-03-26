@@ -8,6 +8,8 @@ component PlanetInfo {
 	uint32 minerals = 3;
 }
 
+// AssignPlanetResponder
+
 type AssignPlanetResponse {
 	EntityId planet_id = 1;
 	string planet_name = 2;
@@ -20,4 +22,20 @@ type AssignPlanetRequest {
 component AssignPlanetResponder {
   id = 102;
   command AssignPlanetResponse assign_planet(AssignPlanetRequest);
+}
+
+// PlanetInfoResponder
+
+type PlanetInfoResponse {
+	string name = 1;
+	uint32 minerals = 2;
+}
+
+type PlanetInfoRequest {
+	EntityId planet_id = 1;
+}
+
+component PlanetInfoResponder {
+  id = 103;
+  command PlanetInfoResponse planet_info(PlanetInfoRequest);
 }

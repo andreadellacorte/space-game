@@ -122,7 +122,7 @@ namespace Demo
       entity.Add(new Persistence.Data());
       entity.Add(new Metadata.Data(entityType));
       entity.Add(new Position.Data(new Coordinates(x, 0, z)));
-      entity.Add(new PlanetInfo.Data(StarName.Generate(random),"", 0));
+      entity.Add(new PlanetInfo.Data(StarName.Generate(random),"", 15));
       return entity;
     }
 
@@ -152,7 +152,8 @@ namespace Demo
       {
         {EntityAcl.ComponentId, workerWriteRequirementSet},
         {Position.ComponentId, workerWriteRequirementSet},
-        {AssignPlanetResponder.ComponentId, workerWriteRequirementSet}
+        {AssignPlanetResponder.ComponentId, workerWriteRequirementSet},
+        {PlanetInfoResponder.ComponentId, workerWriteRequirementSet}
       };
 
       entity.Add(new EntityAcl.Data(readRequirementSet, writeAcl));
@@ -161,6 +162,7 @@ namespace Demo
       entity.Add(new Metadata.Data(entityType));
       entity.Add(new Position.Data(new Coordinates(x, 0, z)));
       entity.Add(new AssignPlanetResponder.Data());
+      entity.Add(new PlanetInfoResponder.Data());
       return entity;
     }
   }

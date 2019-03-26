@@ -82,16 +82,16 @@ namespace Demo
           
           dispatcher.OnCommandResponse<AssignPlanetResponder.Commands.AssignPlanet>(response =>
           {
-              HandleAssignPlanet(response, connection);
+              HandleAssignPlanetResponse(response, connection);
+          });
+          
+          dispatcher.OnCommandResponse<PlanetInfoResponder.Commands.PlanetInfo>(response =>
+          {
+              HandlePlanetInfoResponse(response, connection);
           });
 
           connection.SendLogMessage(LogLevel.Info, LoggerName,
             "Successfully connected using TCP and the Receptionist");
-            
-          AssignPlanetResponder.Commands.AssignPlanet.Request assignPlanet =
-            new AssignPlanetResponder.Commands.AssignPlanet.Request(new AssignPlanetRequest(playerId));
-
-          connection.SendCommandRequest(PlanetAuthorityMarkersEntityIds[random.Next(PlanetAuthorityMarkersEntityIds.Length)], assignPlanet, CommandRequestTimeoutMS, null);
           
           // UX Thread to read from CLI
           new Thread(() =>
@@ -99,13 +99,40 @@ namespace Demo
             while (isConnected)
             {
               Thread.CurrentThread.IsBackground = true;
+              
+              // Find a planet
+              while(!planetId.IsValid())
+              {
+                Console.WriteLine("Assigning you a planet... Looking...");
+
+                AssignPlanetResponder.Commands.AssignPlanet.Request assignPlanet =
+                  new AssignPlanetResponder.Commands.AssignPlanet.Request(new AssignPlanetRequest(playerId));
+
+                connection.SendCommandRequest(PlanetAuthorityMarkersEntityIds[random.Next(PlanetAuthorityMarkersEntityIds.Length)], assignPlanet, CommandRequestTimeoutMS, null);
+                
+                System.Threading.Thread.Sleep(1500);
+              }
+              
+              // Start user interaction loop
               string s = Console.ReadLine();
               Console.WriteLine("Please enter your command:");
-              Console.WriteLine("1. Build mine");
+              Console.WriteLine(" 1. Build mine");
+              Console.WriteLine(" 2. Check planet status");
               
               if(s == "1")
               {
                 Console.WriteLine("PRRR, new mine built.");
+              }
+              else if(s == "2")
+              {
+                Console.WriteLine("Checking planet status...");
+                PlanetInfoResponder.Commands.PlanetInfo.Request planetInfo =
+                  new PlanetInfoResponder.Commands.PlanetInfo.Request(new PlanetInfoRequest(planetId));
+                
+                foreach (var entityId in PlanetAuthorityMarkersEntityIds)
+                {
+                  connection.SendCommandRequest(entityId, planetInfo, CommandRequestTimeoutMS, null);
+                }
               }
               else
               {
@@ -141,7 +168,7 @@ namespace Demo
       }
     }
     
-    private static void HandleAssignPlanet(CommandResponseOp<AssignPlanetResponder.Commands.AssignPlanet> response, Connection connection)
+    private static void HandleAssignPlanetResponse(CommandResponseOp<AssignPlanetResponder.Commands.AssignPlanet> response, Connection connection)
     {
       if (response.StatusCode != StatusCode.Success)
       {
@@ -171,6 +198,45 @@ namespace Demo
         planetName = response.Response.Value.Get().Value.planetName;
 
         var logMessage = String.Format("Assigned Planet '{0}' (EntityId {1}) to this client", planetName, planetId.Id);
+      
+        Console.WriteLine(logMessage);
+        connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+      }
+    }
+    
+    private static void HandlePlanetInfoResponse(CommandResponseOp<PlanetInfoResponder.Commands.PlanetInfo> response, Connection connection)
+    {
+      if (response.StatusCode != StatusCode.Success)
+      {
+        StringBuilder logMessageBuilder = new StringBuilder();
+        logMessageBuilder.Append(
+            String.Format("Received invalid OnCommandResponse for request ID {0} with status code {1} to entity with ID {2}.", response.RequestId, response.StatusCode, response.EntityId));
+        if (!string.IsNullOrEmpty(response.Message))
+        {
+            logMessageBuilder.Append(String.Format("The message was \'{0}\'.", response.Message));
+        }
+
+        if (!response.Response.HasValue)
+        {
+            logMessageBuilder.Append("The response was missing.");
+        }
+        else
+        {
+            logMessageBuilder.Append(
+                String.Format("The EntityIdResponse ID value was {0}", response.Response.Value.Get().Value));
+        }
+
+        connection.SendLogMessage(LogLevel.Warn, LoggerName, logMessageBuilder.ToString());
+      }
+      else if(string.IsNullOrEmpty(response.Response.Value.Get().Value.name))
+      {
+        return;
+      }
+      else
+      {
+        var logMessage = String.Format("Received PlanetInfo from '{0}': {1} minerals",
+          response.Response.Value.Get().Value.name,
+          response.Response.Value.Get().Value.minerals);
       
         Console.WriteLine(logMessage);
         connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
