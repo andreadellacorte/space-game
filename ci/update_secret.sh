@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e -u
+set -e -u -x
 
 pushd "$( dirname "${BASH_SOURCE[0]}" )"
 
