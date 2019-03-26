@@ -24,6 +24,7 @@ namespace Demo
     private static readonly Random random = new Random();
     private static string playerId;
     private static EntityId planetId;
+    private static string planetName;
     
     private static readonly EntityId[] PlanetAuthorityMarkersEntityIds =
     {
@@ -167,7 +168,9 @@ namespace Demo
       else
       {
         planetId = response.Response.Value.Get().Value.planetId;
-        var logMessage = String.Format("Assigned Planet with EntityId {0} to this client", planetId.Id);
+        planetName = response.Response.Value.Get().Value.planetName;
+
+        var logMessage = String.Format("Assigned Planet '{0}' (EntityId {1}) to this client", planetName, planetId.Id);
       
         Console.WriteLine(logMessage);
         connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);

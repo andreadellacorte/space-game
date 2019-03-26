@@ -122,7 +122,7 @@ namespace Demo
       entity.Add(new Persistence.Data());
       entity.Add(new Metadata.Data(entityType));
       entity.Add(new Position.Data(new Coordinates(x, 0, z)));
-      entity.Add(new PlanetInfo.Data(StarName.Generate(random),"", "Planet Name", 0));
+      entity.Add(new PlanetInfo.Data(StarName.Generate(random),"", 0));
       return entity;
     }
 
