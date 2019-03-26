@@ -4,6 +4,10 @@ set -e -u -x
 
 rvm use 2.3.7
 
+HOMEBREW_RUBY_PATH=$(which ruby)
+
+echo $HOMEBREW_RUBY_PATH
+
 brew config
 brew tap caskroom/cask
 brew update --debug --verbose

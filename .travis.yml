@@ -7,7 +7,6 @@ env:
     - DEPLOYMENT_TTL=ttl_1_hours
     - ASSEMBLY_NAME=spacegame_$TRAVIS_JOB_NUMBER
     - HOMEBREW_DEVELOPER=1
-    - HOMEBREW_RUBY_PATH=$(which ruby)
 cache:
   timeout: 3600
   directories:
