@@ -5,6 +5,7 @@ env:
     - DEPLOYMENT_TTL=ttl_1_hours
     - ASSEMBLY_NAME=spacegame_$TRAVIS_JOB_NUMBER
     - HOMEBREW_FORCE_VENDOR_RUBY=0
+    - HOMEBREW_NO_AUTO_UPDATE=1
 cache:
   timeout: 3600
   directories:
