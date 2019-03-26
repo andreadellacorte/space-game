@@ -2,13 +2,15 @@
 
 set -e -u
 
-pushd SpatialOS
+pushd "$( dirname "${BASH_SOURCE[0]}" )"
+
+pushd ../SpatialOS
 
 ./scripts/build_project.sh
 
 popd
 
-pushd PlatformSDK
+pushd ../PlatformSDK
 
 dotnet build
 

@@ -14,7 +14,7 @@ notifications:
 before_cache:
   - brew cleanup
 before_install:
-  - chmod a+x ./ci/secret.sh
+  - chmod a+x ./ci/deploy_secret.sh
   - chmod a+x ./ci/install.sh
   - chmod a+x ./ci/tear_down.sh
   - chmod a+x ./ci/build.sh
@@ -23,7 +23,7 @@ before_install:
 install:
   - "./ci/install.sh"
 before_script:
-  - "./ci/secret.sh"
+  - "./ci/deploy_secret.sh"
   - "./ci/tear_down.sh"
 script:
   - "./ci/build.sh"
