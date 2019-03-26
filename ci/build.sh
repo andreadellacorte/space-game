@@ -2,4 +2,14 @@
 
 set -e -u
 
-./SpatialOS/scripts/build_project.sh
+pushd SpatialOS
+
+./scripts/build_project.sh
+
+popd
+
+pushd PlatformSDK
+
+dotnet build
+
+popd

@@ -7,3 +7,4 @@ brew update >/dev/null
 brew cask install spatial
 
 brew install mono
+brew cask install dotnet

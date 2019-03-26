@@ -19,3 +19,6 @@ SnapshotGenerator/src/improbable/generated
 PlanetWorker/bin/
 PlanetWorker/lib/
 PlanetWorker/src/improbable/generated
+
+PlatformSDK/**/bin
+PlatformSDK/**/obj
