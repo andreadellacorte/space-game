@@ -3,8 +3,6 @@
 set -e -u -x
 
 rvm --default use 2.3.7
-mkdir -p /usr/local/Homebrew/Library/Homebrew/vendor/portable-ruby/2.3.7/bin/
-ln -s $(which ruby) /usr/local/Homebrew/Library/Homebrew/vendor/portable-ruby/2.3.7/bin/ruby
 
 brew config
 brew tap caskroom/cask
