@@ -20,3 +20,5 @@ then
   echo "ERROR: dotnet sdk not found"
   exit 1
 fi
+
+brew doctor
