@@ -2,13 +2,16 @@
 
 set -e -u
 
+echo "HOMEBREW_FORCE_VENDOR_RUBY is set to:"
+echo $HOMEBREW_FORCE_VENDOR_RUBY
+
 brew tap caskroom/cask
 brew update
-#brew cask install spatial
+brew cask install spatial
 
 brew install mono
 brew cask install dotnet-sdk
-#ln -s /usr/local/share/dotnet/dotnet /usr/local/bin/
+ln -s /usr/local/share/dotnet/dotnet /usr/local/bin/
 
 spatial version
 mono --version
