@@ -33,9 +33,3 @@ script:
   - if [ $TRAVIS_TEST_RESULT -eq 0 ]; then ./ci/test_cloud.sh; fi
 before_cache:
   - brew cleanup
-  
-  
-if [[ -z "$HOMEBREW_DEVELOPER" ]]
-then
-  echo "Hello"
-fi
