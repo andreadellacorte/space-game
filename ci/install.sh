@@ -3,13 +3,18 @@
 set -e -u
 
 brew tap caskroom/cask
-brew update >/dev/null
-brew cask install spatial
+brew update
+#brew cask install spatial
 
 brew install mono
 brew cask install dotnet-sdk
-ln -s /usr/local/share/dotnet/dotnet /usr/local/bin/
+#ln -s /usr/local/share/dotnet/dotnet /usr/local/bin/
 
 spatial version
 mono --version
-dotnet --version
+
+if ! dotnet --list-sdks | grep sdk
+then
+  echo "ERROR: dotnet sdk not found"
+  exit 1
+fi
