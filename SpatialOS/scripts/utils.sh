@@ -2,7 +2,8 @@
 
 # This script defines various paths and methods to be used when building the project
 
-set -e -x
+set -e -u
+
 pushd "$( dirname "${BASH_SOURCE[0]}" )"
 
 SDK_VERSION="13.5.1"

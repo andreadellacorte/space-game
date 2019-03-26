@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
 
-set -e
-set -u
+set -e -u -x
 
 pushd "$( dirname "${BASH_SOURCE[0]}" )"
 
+# Write token to file
+TOKEN=ADD_OAUTH2_REFRESH_TOKEN_HERE
+echo $TOKEN > ./oauth2_refresh_token
+
+# Tar secrets since travis can only encrypt one file at the time
+tar cvf ./secrets.tar ./oauth2_refresh_token
+
+# Sign in to travis
 travis login --auto-token --com
-
-cp ~/.improbable/oauth2/* .
-
-tar cvf secrets.tar oauth2_access_token_spatial_improbable_cli_client_go oauth2_refresh_token
-
 travis encrypt-file secrets.tar -r andreadellacorte/space-game --com
 
-mv ./secrets.tar.enc ..
-
-rm oauth2_access_token_spatial_improbable_cli_client_go
-rm oauth2_refresh_token
-rm secrets.tar
+# Cleanup
+rm ./oauth2_refresh_token
+rm ./secrets.tar
 
 popd

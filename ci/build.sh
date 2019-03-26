@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 
-set -e
-set -u
+set -e -u -x
 
-./SpatialOS/scripts/build_project.sh
+pushd "$( dirname "${BASH_SOURCE[0]}" )"
+
+pushd ../SpatialOS
+
+./scripts/build_project.sh
+
+popd
+
+pushd ../PlatformSDK
+
+dotnet build
+
+popd

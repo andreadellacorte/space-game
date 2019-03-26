@@ -1,19 +1,18 @@
 os: osx
 env:
   global:
-    - HOMEBREW_FOLDER=$HOME/Library/Caches/Homebrew
     - DEPLOYMENT_NAME=spacegame
     - DEPLOYMENT_TTL=ttl_1_hours
     - ASSEMBLY_NAME=spacegame_$TRAVIS_JOB_NUMBER
 cache:
   timeout: 3600
   directories:
-    - "$HOMEBREW_FOLDER"
+    - $HOME/Library/Caches/Homebrew
 notifications:
   email:
     - andrea@improbable.io
 before_install:
-  - chmod a+x ./ci/secret.sh
+  - chmod a+x ./ci/deploy_secret.sh
   - chmod a+x ./ci/install.sh
   - chmod a+x ./ci/tear_down.sh
   - chmod a+x ./ci/build.sh
@@ -22,7 +21,7 @@ before_install:
 install:
   - "./ci/install.sh"
 before_script:
-  - "./ci/secret.sh"
+  - "./ci/deploy_secret.sh"
   - "./ci/tear_down.sh"
 script:
   - "./ci/build.sh"
@@ -30,3 +29,5 @@ script:
   - if [ $TRAVIS_TEST_RESULT -eq 0 ]; then ./ci/test_cloud.sh; fi
 after_script:
   - curl --upload-file $(ls -t $TRAVIS_BUILD_DIR/SpatialOS/logs/spatial_* | head -n 1) "https://transfer.sh/spatial_$TRAVIS_BUILD_NUMBER.log"
+before_cache:
+  - brew cleanup

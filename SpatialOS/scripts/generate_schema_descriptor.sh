@@ -2,7 +2,8 @@
 
 # This script generates a schema descriptor from the project schema
 
-set -e -x
+set -e -u
+
 pushd "$( dirname "${BASH_SOURCE[0]}" )"
 source ./utils.sh
 

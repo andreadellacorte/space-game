@@ -22,3 +22,6 @@ PlanetWorker/bin/
 PlanetWorker/lib/
 PlanetWorker/src/obj/
 PlanetWorker/src/improbable/generated
+
+PlatformSDK/**/bin
+PlatformSDK/**/obj

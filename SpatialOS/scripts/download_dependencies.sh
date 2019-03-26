@@ -2,7 +2,8 @@
 
 # This script retrieves the project dependencies from the SpatialOS SDK
 
-set -e -x
+set -e -u
+
 pushd "$( dirname "${BASH_SOURCE[0]}" )"
 source ./utils.sh
 

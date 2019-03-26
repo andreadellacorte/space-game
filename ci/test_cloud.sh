@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 
-set -e
-set -u
+set -e -u -x
 
 pushd SpatialOS
 
-spatial alpha cloud upload -a $ASSEMBLY_NAME
+spatial alpha cloud upload -a $ASSEMBLY_NAME --force
 
 spatial alpha cloud launch -a $ASSEMBLY_NAME -d $DEPLOYMENT_NAME
 
