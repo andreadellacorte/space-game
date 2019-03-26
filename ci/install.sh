@@ -3,9 +3,9 @@
 set -e -u -x
 
 brew doctor
-brew update --verbose
-brew doctor
+brew config
 brew tap caskroom/cask
+brew update
 brew cask install spatial
 
 brew install mono
