@@ -71,23 +71,28 @@ namespace Demo
           
           dispatcher.OnAuthorityChange<PlanetInfo>(op =>
           {
-            var logMessage = String.Format("Changing Authority for entityId {0}", op.EntityId);
-            connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+            string logMessage;
 
             ViewEntity entity;
             if (EntityView.TryGetValue(op.EntityId, out entity))
             {
               if(op.Authority == Authority.Authoritative)
               {
-                  entity.hasAuthority = true;
+                logMessage = String.Format("Gained authority over entityId {0}", op.EntityId);
+                connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+                entity.hasAuthority = true;
               }
               else if (op.Authority == Authority.NotAuthoritative)
               {
-                  entity.hasAuthority = false;
+                logMessage = String.Format("Lost authority over entityId {0}", op.EntityId);
+                connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+                entity.hasAuthority = false;
               }
               else if (op.Authority == Authority.AuthorityLossImminent)
               {
-                  entity.hasAuthority = false;
+                logMessage = String.Format("Lost authority over entityId {0}", op.EntityId);
+                connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+                entity.hasAuthority = false;
               }
             }
           });
