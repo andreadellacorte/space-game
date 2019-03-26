@@ -4,7 +4,6 @@ env:
     - DEPLOYMENT_NAME=spacegame
     - DEPLOYMENT_TTL=ttl_1_hours
     - ASSEMBLY_NAME=spacegame_$TRAVIS_JOB_NUMBER
-    - PATH="/usr/local/opt/ruby/bin:$PATH"
 cache:
   timeout: 3600
   directories:
