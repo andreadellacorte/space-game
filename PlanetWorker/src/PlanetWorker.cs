@@ -252,18 +252,18 @@ namespace Demo
       connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
       
       ViewEntity entity;
-      var planetInfoResponse = new PlanetInfoResponse("",0);
       if (EntityView.TryGetValue(request.Request.Get().Value.planetId, out entity))
       {
-        if (entity.hasAuthority)
-        {
-          PlanetInfoData planetInfoData = entity.entity.Get<PlanetInfo>().Value.Get().Value;
-          planetInfoResponse = new PlanetInfoResponse(planetInfoData.name, planetInfoData.minerals);
-        }
+        PlanetInfoData planetInfoData = entity.entity.Get<PlanetInfo>().Value.Get().Value;
+        var planetInfoResponse = new PlanetInfoResponse(planetInfoData.name, planetInfoData.minerals);
+        var commandResponse = new PlanetInfoResponder.Commands.PlanetInfo.Response(planetInfoResponse);
+        connection.SendCommandResponse(request.RequestId, commandResponse);
       }
-
-      var commandResponse = new PlanetInfoResponder.Commands.PlanetInfo.Response(planetInfoResponse);
-      connection.SendCommandResponse(request.RequestId, commandResponse);
+      else
+      {
+        logMessage = String.Format("No planets available for planetId {0}", request.Request.Get().Value.planetId);
+        throw new SystemException(logMessage);
+      }
     }
   }
 }

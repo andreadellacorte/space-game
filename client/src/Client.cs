@@ -129,10 +129,7 @@ namespace Demo
                 PlanetInfoResponder.Commands.PlanetInfo.Request planetInfo =
                   new PlanetInfoResponder.Commands.PlanetInfo.Request(new PlanetInfoRequest(planetId));
                 
-                foreach (var entityId in PlanetAuthorityMarkersEntityIds)
-                {
-                  connection.SendCommandRequest(entityId, planetInfo, CommandRequestTimeoutMS, null);
-                }
+                connection.SendCommandRequest(planetId, planetInfo, CommandRequestTimeoutMS, null);
               }
               else
               {
@@ -227,10 +224,6 @@ namespace Demo
         }
 
         connection.SendLogMessage(LogLevel.Warn, LoggerName, logMessageBuilder.ToString());
-      }
-      else if(string.IsNullOrEmpty(response.Response.Value.Get().Value.name))
-      {
-        return;
       }
       else
       {
