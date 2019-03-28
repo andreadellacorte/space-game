@@ -343,6 +343,7 @@ namespace Demo
         PlanetInfoData planetInfoData = viewEntity.entity.Get<PlanetInfo>().Value.Get().Value;
         
         string response;
+        int timeRequired = 0;
         
         if(planetInfoData.buildQueue != Improvement.NONE)
         {
@@ -362,6 +363,7 @@ namespace Demo
             planetInfoUpdate.SetBuildMaterials(planetInfoData.mineLevel * 20);
             connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
             response = String.Format("Started building {0} on Planet {1}", request.Request.Get().Value.improvement, planetInfoData.name);
+            timeRequired = planetInfoData.mineLevel * 12;
           }
         }
         else
@@ -369,7 +371,7 @@ namespace Demo
           throw new SystemException("Unknown improvement type");
         }
         
-        var planetImprovementResponse = new PlanetImprovementResponse(response);
+        var planetImprovementResponse = new PlanetImprovementResponse(response, timeRequired);
         var commandResponse = new PlanetImprovementResponder.Commands.PlanetImprovement.Response(planetImprovementResponse);
         connection.SendCommandResponse(request.RequestId, commandResponse);
       }

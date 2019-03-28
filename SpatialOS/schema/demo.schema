@@ -6,6 +6,7 @@ package demo;
 enum Improvement {
 	NONE = 0;
 	MINE = 1;
+	PROBE = 2;
 }
 
 // PlanetInfo
@@ -60,6 +61,7 @@ component PlanetInfoResponder {
 
 type PlanetImprovementResponse {
 	string message = 1;
+	int32 time_required = 2;
 }
 
 type PlanetImprovementRequest {

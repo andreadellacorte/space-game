@@ -10,7 +10,7 @@ source ./utils.sh
 ./download_dependencies.sh
 ./generate_schema_descriptor.sh
 
-if [ $# -gt 1 && $1 != "empty" ]; then
+if [ $# -gt 1 ] && [ $1 != "empty" ]; then
   WORKER_DIRS=($1)
 fi
 
