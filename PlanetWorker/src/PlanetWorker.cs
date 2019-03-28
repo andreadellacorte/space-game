@@ -76,7 +76,7 @@ namespace Demo
           
           dispatcher.OnAuthorityChange<PlanetInfo>(op =>
           {
-            string logMessage;
+            //string logMessage;
 
             ViewEntity entity;
             if (EntityView.TryGetValue(op.EntityId, out entity))
@@ -160,6 +160,11 @@ namespace Demo
           dispatcher.OnCommandRequest<PlanetInfoResponder.Commands.PlanetInfo>(request =>
           {
             HandlePlanetInfoRequest(request, connection);
+          });
+          
+          dispatcher.OnCommandRequest<PlanetImprovementResponder.Commands.PlanetImprovement>(request =>
+          {
+            HandlePlanetImprovementRequest(request, connection);
           });
 
           connection.SendLogMessage(LogLevel.Info, LoggerName,
@@ -260,8 +265,6 @@ namespace Demo
           //Create new component update object
           PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
           planetInfoUpdate.SetPlayerId(playerId);
-
-          // Send the updates
           connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
 
           // Send the assigned planet to the client
@@ -291,13 +294,46 @@ namespace Demo
       if (EntityView.TryGetValue(request.Request.Get().Value.planetId, out viewEntity))
       {
         PlanetInfoData planetInfoData = viewEntity.entity.Get<PlanetInfo>().Value.Get().Value;
-        var planetInfoResponse = new PlanetInfoResponse(planetInfoData.name, planetInfoData.minerals);
+        var planetInfoResponse = new PlanetInfoResponse(planetInfoData.name, planetInfoData.mineLevel, planetInfoData.minerals);
         var commandResponse = new PlanetInfoResponder.Commands.PlanetInfo.Response(planetInfoResponse);
         connection.SendCommandResponse(request.RequestId, commandResponse);
       }
       else
       {
         logMessage = String.Format("No planets available for planetId {0}", request.Request.Get().Value.planetId);
+        throw new SystemException(logMessage);
+      }
+    }
+
+    private static void HandlePlanetImprovementRequest(CommandRequestOp<PlanetImprovementResponder.Commands.PlanetImprovement> request, Connection connection)
+    {
+      var logMessage = String.Format("Received PlanetImprovement Command for EntityId {0}", request.Request.Get().Value.planetId);
+      connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+      
+      ViewEntity viewEntity;
+      if (EntityView.TryGetValue(request.Request.Get().Value.planetId, out viewEntity))
+      {
+        var planetId = request.Request.Get().Value.planetId;
+        PlanetInfoData planetInfoData = viewEntity.entity.Get<PlanetInfo>().Value.Get().Value;
+        
+        if(request.Request.Get().Value.improvement == Improvement.MINE){
+          //Create new component update object
+          PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
+          planetInfoUpdate.SetMineLevel(planetInfoData.mineLevel+1);
+          connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
+
+          var planetImprovementResponse = new PlanetImprovementResponse();
+          var commandResponse = new PlanetImprovementResponder.Commands.PlanetImprovement.Response(planetImprovementResponse);
+          connection.SendCommandResponse(request.RequestId, commandResponse);
+        }
+        else
+        {
+          throw new SystemException("Unknown improvement type");
+        }
+      }
+      else
+      {
+        logMessage = String.Format("No planet found for planetId {0}", request.Request.Get().Value.planetId);
         throw new SystemException(logMessage);
       }
     }

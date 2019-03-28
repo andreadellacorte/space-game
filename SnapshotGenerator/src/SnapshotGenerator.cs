@@ -115,7 +115,8 @@ namespace Demo
         {EntityAcl.ComponentId, workerWriteRequirementSet},
         {Position.ComponentId, workerWriteRequirementSet},
         {PlanetInfo.ComponentId, workerWriteRequirementSet},
-        {PlanetInfoResponder.ComponentId, workerWriteRequirementSet}
+        {PlanetInfoResponder.ComponentId, workerWriteRequirementSet},
+        {PlanetImprovementResponder.ComponentId, workerWriteRequirementSet}
       };
       
       entity.Add(new EntityAcl.Data(readRequirementSet, writeAcl));
@@ -125,6 +126,8 @@ namespace Demo
       entity.Add(new Position.Data(new Coordinates(x, 0, z)));
       entity.Add(new PlanetInfo.Data(StarName.Generate(random),"", 1, 15));
       entity.Add(new PlanetInfoResponder.Data());
+      entity.Add(new PlanetImprovementResponder.Data());
+      
       return entity;
     }
 

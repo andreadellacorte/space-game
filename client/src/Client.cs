@@ -19,7 +19,6 @@ namespace Demo
     private const int ErrorExitStatus = 1;
     private const uint GetOpListTimeoutInMilliseconds = 0;
     private const uint CommandRequestTimeoutMS = 0;
-    private const int pingIntervalMs = 5000;
     
     private static readonly Random random = new Random();
     private static string playerId;
@@ -91,6 +90,11 @@ namespace Demo
           {
               HandlePlanetInfoResponse(response, connection);
           });
+          
+          dispatcher.OnCommandResponse<PlanetImprovementResponder.Commands.PlanetImprovement>(response =>
+          {
+              HandlePlanetImprovementResponse(response, connection);
+          });
 
           connection.SendLogMessage(LogLevel.Info, LoggerName,
             "Successfully connected using TCP and the Receptionist");
@@ -116,19 +120,26 @@ namespace Demo
               }
               
               while(isWaiting){
-                System.Threading.Thread.Sleep(500);
+                Console.WriteLine("Waiting for reply...");
+                System.Threading.Thread.Sleep(1000);
               }
               
               // Start user interaction loop
               Console.WriteLine("Please enter your command:");
-              Console.WriteLine(" 1. Build mine");
+              Console.WriteLine(" 1. Improve mine");
               Console.WriteLine(" 2. Check planet status");
               Console.WriteLine(" Q. Quit");
+
               string s = Console.ReadLine();
               
               if(s == "1")
               {
-                Console.WriteLine("PRRR, new mine built.");
+                Console.WriteLine("Improving mine level...");
+                PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
+                  new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.MINE));
+                
+                connection.SendCommandRequest(planetId, planetImprovement, CommandRequestTimeoutMS, null);
+                isWaiting = true;
               }
               else if(s == "2")
               {
@@ -241,9 +252,45 @@ namespace Demo
       }
       else
       {
-        var logMessage = String.Format("Received PlanetInfo from '{0}': {1} minerals",
+        var logMessage = String.Format("Received PlanetInfo from '{0}': Level {1} mine, {2} minerals",
           response.Response.Value.Get().Value.name,
+          response.Response.Value.Get().Value.mineLevel,
           response.Response.Value.Get().Value.minerals);
+      
+        Console.WriteLine(logMessage);
+        connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+      }
+      
+      isWaiting = false;
+    }
+    
+    private static void HandlePlanetImprovementResponse(CommandResponseOp<PlanetImprovementResponder.Commands.PlanetImprovement> response, Connection connection)
+    {
+      if (response.StatusCode != StatusCode.Success)
+      {
+        StringBuilder logMessageBuilder = new StringBuilder();
+        logMessageBuilder.Append(
+            String.Format("Received invalid OnCommandResponse for request ID {0} with status code {1} to entity with ID {2}.", response.RequestId, response.StatusCode, response.EntityId));
+        if (!string.IsNullOrEmpty(response.Message))
+        {
+            logMessageBuilder.Append(String.Format("The message was \'{0}\'.", response.Message));
+        }
+
+        if (!response.Response.HasValue)
+        {
+            logMessageBuilder.Append("The response was missing.");
+        }
+        else
+        {
+            logMessageBuilder.Append(
+                String.Format("The EntityIdResponse ID value was {0}", response.Response.Value.Get().Value));
+        }
+
+        connection.SendLogMessage(LogLevel.Warn, LoggerName, logMessageBuilder.ToString());
+      }
+      else
+      {
+        var logMessage = String.Format("Sent request to improve mine");
       
         Console.WriteLine(logMessage);
         connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);

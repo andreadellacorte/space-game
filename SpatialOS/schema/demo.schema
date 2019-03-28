@@ -29,7 +29,8 @@ component AssignPlanetResponder {
 
 type PlanetInfoResponse {
 	string name = 1;
-	uint32 minerals = 2;
+	uint32 mine_level = 2;
+	uint32 minerals = 3;
 }
 
 type PlanetInfoRequest {
@@ -39,4 +40,22 @@ type PlanetInfoRequest {
 component PlanetInfoResponder {
   id = 103;
   command PlanetInfoResponse planet_info(PlanetInfoRequest);
+}
+
+// PlanetImprovementResponder
+
+enum Improvement {
+	MINE = 0;
+}
+
+type PlanetImprovementResponse {}
+
+type PlanetImprovementRequest {
+	EntityId planet_id = 1;
+	Improvement improvement = 2;
+}
+
+component PlanetImprovementResponder {
+  id = 104;
+  command PlanetImprovementResponse planet_improvement(PlanetImprovementRequest);
 }
