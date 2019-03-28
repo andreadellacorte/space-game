@@ -10,6 +10,10 @@ source ./utils.sh
 ./download_dependencies.sh
 ./generate_schema_descriptor.sh
 
+if [ $# -gt 0 ]; then
+  WORKER_DIRS=($1)
+fi
+
 # Build all workers in the project
 for WORKER_DIR in "${WORKER_DIRS[@]}"; do
   pushd "${WORKER_DIR}"

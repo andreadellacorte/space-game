@@ -144,6 +144,8 @@ namespace Demo
           
           dispatcher.OnRemoveEntity(op =>
           {
+            var logMessage = String.Format("Removing entityId {0}", op.EntityId);
+            connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
             EntityView.Remove(op.EntityId);
           });
 

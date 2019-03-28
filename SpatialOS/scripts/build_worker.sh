@@ -23,7 +23,7 @@ mkdir -p "${OUT_DIR}"
 
 # Build a worker executable for each target build platform
 for PLATFORM in "${BUILD_PLATFORMS[@]}"; do
-  ${BUILD_TOOL} $(pwd)/src/CsharpWorker.sln /property:Configuration=Release /property:Platform="$PLATFORM"
+  ${BUILD_TOOL} $(pwd)/src/CsharpWorker.sln /property:Configuration=Release /property:Platform="$PLATFORM" /verbosity:minimal
   cp -r $(pwd)/src/bin .
   rm -rf $(pwd)/src/bin
   rm -rf $(pwd)/src/obj

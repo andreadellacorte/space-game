@@ -100,7 +100,7 @@ namespace Demo
             {
               Thread.CurrentThread.IsBackground = true;
               
-              // Find a planet
+              // Finding a planet for the client
               while(!planetId.IsValid())
               {
                 Console.WriteLine("Assigning you a planet... Looking...");
@@ -114,10 +114,11 @@ namespace Demo
               }
               
               // Start user interaction loop
-              string s = Console.ReadLine();
               Console.WriteLine("Please enter your command:");
               Console.WriteLine(" 1. Build mine");
               Console.WriteLine(" 2. Check planet status");
+              Console.WriteLine(" Q. Quit");
+              string s = Console.ReadLine();
               
               if(s == "1")
               {
@@ -130,6 +131,10 @@ namespace Demo
                   new PlanetInfoResponder.Commands.PlanetInfo.Request(new PlanetInfoRequest(planetId));
                 
                 connection.SendCommandRequest(planetId, planetInfo, CommandRequestTimeoutMS, null);
+              }
+              else if(s == "Q" || s == "q")
+              {
+                isConnected = false;
               }
               else
               {
