@@ -8,6 +8,7 @@ enum Improvement {
 	MINE = 1;
 	PROBE = 2;
 	DEPOSIT = 3;
+	HANGAR = 4;
 }
 
 // PlanetInfo

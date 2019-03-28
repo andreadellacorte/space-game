@@ -11,16 +11,19 @@ SpatialOS/tools
 client/bin/
 client/lib/
 client/src/obj/
-client/src/improbable/generated
+client/src/bin
+client/src/improbable
 
 SnapshotGenerator/bin/
 SnapshotGenerator/lib/
 SnapshotGenerator/src/obj/
-SnapshotGenerator/src/improbable/generated
+SnapshotGenerator/src/bin/
+SnapshotGenerator/src/improbable
 
 PlanetWorker/bin/
 PlanetWorker/lib/
 PlanetWorker/src/obj/
+PlanetWorker/src/bin/
 PlanetWorker/src/improbable/generated
 
 PlatformSDK/**/bin

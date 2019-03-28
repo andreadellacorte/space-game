@@ -205,13 +205,19 @@ namespace Demo
                     switch (planetInfoData.buildQueue)
                     {
                       case Improvement.MINE:
-                          planetInfoUpdate.SetMineLevel(planetInfoData.mineLevel+1);
+                          planetInfoUpdate.SetMineLevel(planetInfoData.mineLevel + 1);
                           break;
                       case Improvement.PROBE:
                           planetInfoUpdate.SetProbes(planetInfoData.probes+1);
                           break;
+                      case Improvement.HANGAR:
+                          planetInfoUpdate.SetHangarLevel(planetInfoData.hangarLevel + 1);
+                          break;
+                      case Improvement.DEPOSIT:
+                          planetInfoUpdate.SetDepositLevel(planetInfoData.depositLevel + 1);
+                          break;
                       default:
-                          Console.WriteLine("Default case");
+                          throw new SystemException("Unknown improvement type");
                           break;
                     }
                     
@@ -383,6 +389,10 @@ namespace Demo
             case Improvement.DEPOSIT:
               mineralsCost = planetInfoData.depositLevel * 80;
               timeRequired = planetInfoData.depositLevel * 30;;
+              break;
+            case Improvement.HANGAR:
+              mineralsCost = planetInfoData.hangarLevel * 150;
+              timeRequired = planetInfoData.hangarLevel * 120;
               break;
             default:
               throw new SystemException("Unknown improvement type");
