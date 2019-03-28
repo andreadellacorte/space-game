@@ -221,7 +221,6 @@ namespace Demo
                         break;
                       default:
                         throw new SystemException("Unknown improvement type");
-                        break;
                     }
                     
                     planetInfoUpdate.SetBuildQueue(Improvement.EMPTY);
@@ -404,7 +403,6 @@ namespace Demo
               break;
             default:
               throw new SystemException("Unknown improvement type");
-              break;
           }
           
           if(planetInfoData.minerals < mineralsCost)

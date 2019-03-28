@@ -6,6 +6,6 @@ set -e -u
 
 pushd "$( dirname "${BASH_SOURCE[0]}" )"
 
-mono --arch=64 ./bin/x64/ReleaseMacOS/Client.exe "Client_$(openssl rand -hex 8)" localhost 7777 
+open -a Terminal ./run_game.sh
 
 popd

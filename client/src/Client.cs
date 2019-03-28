@@ -9,12 +9,14 @@ using System.Timers;
 using System.Threading;
 using Improbable;
 using Improbable.Worker;
+using Improbable.Worker.Alpha;
 
 namespace Demo
 {
   class Client
   {
-    private const string WorkerType = "InteractiveClient";
+    private const string DAT_TokenSecret = "MWY3MTUyNjAtYmY1MS00MzRjLThiMmUtOTc4YTBjOGQ3NWJlOjo4M2ZlOGE3My0xZjFjLTQ3MmEtOGRmNi03NGM1ZDdkNDk2MTg=";
+    private const string WorkerType = "LauncherClient";
     private const string LoggerName = "Client.cs";
     private const int ErrorExitStatus = 1;
     private const uint GetOpListTimeoutInMilliseconds = 0;
@@ -38,13 +40,13 @@ namespace Demo
       Action printUsage = () =>
       {
         Console.WriteLine("Usage: Client <hostname> <port> <client_id>");
-        Console.WriteLine("Connects to a demo deployment.");
+        Console.WriteLine("Connects to a local deployment.");
         Console.WriteLine("    <hostname>      - hostname of the receptionist to connect to.");
         Console.WriteLine("    <port>          - port to use.");
         Console.WriteLine("    <client_id>     - name of the client.");
       };
 
-      if (arguments.Length != 3)
+      if (arguments.Length != 1 && arguments.Length != 3)
       {
         printUsage();
         return ErrorExitStatus;
@@ -57,6 +59,9 @@ namespace Demo
       Console.WriteLine("Welcome to space-game!");
       Console.WriteLine("======================");
       Console.WriteLine();
+      Console.WriteLine("https://github.com/andreadellacorte/space-game");
+      Console.WriteLine("==============================================");
+      Console.WriteLine();
       Console.ResetColor();
 
       using (var connection = ConnectClient(arguments))
@@ -64,7 +69,6 @@ namespace Demo
         using (var dispatcher = new Dispatcher())
         {
           var isConnected = true;
-          
 
           dispatcher.OnDisconnect(op =>
           {
@@ -232,16 +236,67 @@ namespace Demo
 
     private static Connection ConnectClient(string[] arguments)
     {
-      string hostname = arguments[0];
-      ushort port = Convert.ToUInt16(arguments[1]);
-      playerId = arguments[2];
-      var connectionParameters = new ConnectionParameters();
-      connectionParameters.WorkerType = WorkerType;
-      connectionParameters.Network.ConnectionType = NetworkConnectionType.Tcp;
-
-      using (var future = Connection.ConnectAsync(hostname, port, playerId, connectionParameters))
+      playerId = arguments[0];
+      if(arguments.Length == 3)
       {
-        return future.Get();
+        string hostname = arguments[1];
+        ushort port = Convert.ToUInt16(arguments[2]);
+        var connectionParameters = new ConnectionParameters();
+        connectionParameters.WorkerType = WorkerType;
+        connectionParameters.Network.ConnectionType = NetworkConnectionType.Tcp;
+
+        using (var future = Connection.ConnectAsync(hostname, port, playerId, connectionParameters))
+        {
+          return future.Get();
+        }
+      }
+      else
+      {
+        const string LocatorServerAddress = "locator.improbable.io";
+        const int LocatorServerPort = 444;
+        
+        var pitFuture = DevelopmentAuthentication.CreateDevelopmentPlayerIdentityTokenAsync(LocatorServerAddress, LocatorServerPort,
+          new PlayerIdentityTokenRequest
+          {
+              DevelopmentAuthenticationTokenId = DAT_TokenSecret,
+              PlayerId = playerId,
+              DisplayName = "Andrea",
+              Metadata = ""
+          });
+        PlayerIdentityTokenResponse playerIdentityTokenResponse = pitFuture.Get();
+        
+        var ltFuture = DevelopmentAuthentication.CreateDevelopmentLoginTokensAsync(LocatorServerAddress, LocatorServerPort,
+          new LoginTokensRequest
+          {
+              PlayerIdentityToken = playerIdentityTokenResponse.PlayerIdentityToken,
+              WorkerType = WorkerType
+          });
+        LoginTokensResponse loginTokensResponse = ltFuture.Get();
+        
+        if (loginTokensResponse.LoginTokens.Count == 0){
+          throw new SystemException("No running deployments with dev_login tag");
+        }
+                
+        var locatorParameters = new Improbable.Worker.Alpha.LocatorParameters
+        {
+          PlayerIdentity = new PlayerIdentityCredentials
+          {
+              PlayerIdentityToken = playerIdentityTokenResponse.PlayerIdentityToken,
+              LoginToken = loginTokensResponse.LoginTokens[0].LoginToken
+          }
+        };
+        var locator = new Improbable.Worker.Alpha.Locator(LocatorServerAddress, LocatorServerPort, locatorParameters);
+        using (var connectionFuture = locator.ConnectAsync(new ConnectionParameters
+        {
+          WorkerType = WorkerType,
+          Network = {ConnectionType = NetworkConnectionType.Tcp, UseExternalIp = true}
+        }))
+        {
+          var connection = connectionFuture.Get(Convert.ToUInt32(Defaults.ConnectionTimeoutMillis));
+          if (!connection.HasValue || !connection.Value.IsConnected) throw new Exception("No connection or connection not established");
+          Console.WriteLine($"Assigned worker ID: {connection.Value.GetWorkerId()}");
+          return connectionFuture.Get();
+        }
       }
     }
     
