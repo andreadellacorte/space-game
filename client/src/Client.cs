@@ -24,11 +24,6 @@ namespace Demo
     private static string playerId;
     private static EntityId planetId;
     private static string planetName;
-
-    private static bool isWaiting;
-    private static string waitMessage;
-    private static int waitLength;
-    private static string waitResult;
     
     private static readonly EntityId[] PlanetAuthorityMarkersEntityIds =
     {
@@ -56,6 +51,7 @@ namespace Demo
       }
 
       Console.WriteLine("Client Starting...");
+      Console.WriteLine();
       using (var connection = ConnectClient(arguments))
       {
         using (var dispatcher = new Dispatcher())
@@ -109,11 +105,11 @@ namespace Demo
             while (isConnected)
             {
               Thread.CurrentThread.IsBackground = true;
-              
+            
               // Finding a planet for the client
               while(!planetId.IsValid())
               {
-                Console.WriteLine("Assigning you a planet... Looking...");
+                displayProgressBar("Assigning you a planet... ", 10);
 
                 AssignPlanetResponder.Commands.AssignPlanet.Request assignPlanet =
                   new AssignPlanetResponder.Commands.AssignPlanet.Request(new AssignPlanetRequest(playerId));
@@ -123,36 +119,19 @@ namespace Demo
                 System.Threading.Thread.Sleep(1600);
               }
               
-              while(isWaiting){
-                if(waitMessage != "" && waitLength > 0 && waitResult != "")
-                {
-                  Console.WriteLine(waitMessage);
-                  using (var progress = new ProgressBar()) {
-                    for (int i = 0; i <= 100; i++) {
-                      progress.Report((double) i / 100);
-                      Thread.Sleep(waitLength);
-                    }
-                  }
-                  Console.WriteLine(waitResult);
-                }
-                
-                isWaiting = false;
-                waitMessage = "";
-                waitLength = 0;
-                waitResult = "";
-              }
-              
               // Start user interaction loop
               Console.WriteLine("Please enter your command:");
               Console.WriteLine(" 1. Improve mine");
               Console.WriteLine(" 2. Check planet status");
+              Console.WriteLine(" 3. Build probe");
               Console.WriteLine(" Q. Quit");
 
               string s = Console.ReadLine();
               
               if(s == "1")
               {
-                isWaiting = true;
+                displayProgressBar("Improving mine level... ", 5);
+                
                 PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
                   new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.MINE));
                 
@@ -160,14 +139,21 @@ namespace Demo
               }
               else if(s == "2")
               {
-                isWaiting = true;
-                waitMessage = "Checking planet status...";
-                waitLength = 10;
+                displayProgressBar("Checking planet status... ", 5);
                 
                 PlanetInfoResponder.Commands.PlanetInfo.Request planetInfo =
                   new PlanetInfoResponder.Commands.PlanetInfo.Request(new PlanetInfoRequest(planetId));
                 
                 connection.SendCommandRequest(planetId, planetInfo, CommandRequestTimeoutMS, null);
+              }
+              else if(s == "3")
+              {
+                displayProgressBar("TODO... ", 5);
+                // TODO
+                // PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
+                //  new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.PROBE));
+                
+                // connection.SendCommandRequest(planetId, planetImprovement, CommandRequestTimeoutMS, null);
               }
               else if(s == "Q" || s == "q")
               {
@@ -192,6 +178,17 @@ namespace Demo
       }
 
       return 0;
+    }
+    
+    private static void displayProgressBar(string waitMessage, int waitLength)
+    {
+      Console.Write(waitMessage);
+      using (var progress = new ProgressBar()) {
+        for (int i = 0; i <= 100; i++) {
+          progress.Report((double) i / 100);
+          Thread.Sleep(waitLength);
+        }
+      }
     }
 
     private static Connection ConnectClient(string[] arguments)
@@ -241,6 +238,7 @@ namespace Demo
         var logMessage = String.Format("Assigned Planet '{0}' (EntityId {1}) to this client", planetName, planetId.Id);
       
         Console.WriteLine(logMessage);
+        Console.WriteLine();
         connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
       }
     }
@@ -271,12 +269,19 @@ namespace Demo
       }
       else
       {
-        var logMessage = waitResult = String.Format("Received PlanetInfo from '{0}' / Level {1} mine - {2} minerals / Build Queue: {3} - {4} seconds remaining",
-          response.Response.Value.Get().Value.name,
+        var logMessage = String.Format("Planet {0}:", response.Response.Value.Get().Value.name);
+        Console.WriteLine(logMessage);
+        
+        logMessage = String.Format("  / Level {0} mine - {1} minerals",
           response.Response.Value.Get().Value.mineLevel,
-          (int) response.Response.Value.Get().Value.minerals,
+          (int) response.Response.Value.Get().Value.minerals);
+        Console.WriteLine(logMessage);
+        
+        logMessage = String.Format("  / Build Queue: {0} - {1} seconds remaining",
           response.Response.Value.Get().Value.buildQueue,
           (int) response.Response.Value.Get().Value.buildQueueTime);
+        Console.WriteLine(logMessage);
+        Console.WriteLine();
 
         connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
       }
@@ -309,14 +314,8 @@ namespace Demo
       else
       {
         Console.WriteLine(response.Response.Value.Get().Value.message);
+        Console.WriteLine();
         connection.SendLogMessage(LogLevel.Info, LoggerName, response.Response.Value.Get().Value.message);
-        
-        if(response.Response.Value.Get().Value.timeRequired > 0)
-        {
-          waitMessage="Improving mine level...";
-          waitLength = response.Response.Value.Get().Value.timeRequired * 10;
-          waitResult ="Done";
-        }
       }
     }
   }
