@@ -216,9 +216,9 @@ namespace Demo
                       case Improvement.DEPOSIT:
                         planetInfoUpdate.SetDepositLevel(planetInfoData.depositLevel + 1);
                         break;
-                        case Improvement.NANOBOTS:
-                          planetInfoUpdate.SetNanobotLevel(planetInfoData.nanobotLevel + 1);
-                          break;
+                      case Improvement.NANOBOTS:
+                        planetInfoUpdate.SetNanobotLevel(planetInfoData.nanobotLevel + 1);
+                        break;
                       default:
                         throw new SystemException("Unknown improvement type");
                         break;

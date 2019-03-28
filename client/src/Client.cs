@@ -142,9 +142,8 @@ namespace Demo
               Console.WriteLine();
 
               Console.ForegroundColor = ConsoleColor.DarkRed;
-              Console.Write("Command:");
+              Console.Write("Command: ");
               Console.ResetColor();
-              Console.Write(" ");
 
               string s = Console.ReadLine();
               
@@ -153,15 +152,13 @@ namespace Demo
               if(s == "")
               {
                 displayProgressBar("Checking planet status... ", 10);
-                
                 PlanetInfoResponder.Commands.PlanetInfo.Request planetInfo =
                   new PlanetInfoResponder.Commands.PlanetInfo.Request(new PlanetInfoRequest(planetId));
                 connection.SendCommandRequest(planetId, planetInfo, CommandRequestTimeoutMS, null);
               }
               else if(s == "1")
               {
-                displayProgressBar("Improving mine level... ", 10);
-                
+                displayProgressBar("Improving mine... ", 10);
                 PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
                   new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.MINE));
                 
@@ -169,35 +166,41 @@ namespace Demo
               }
               else if(s == "2")
               {
+                displayProgressBar("Improving mineral deposit... ", 10);
                 PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
                 new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.DEPOSIT));
                 connection.SendCommandRequest(planetId, planetImprovement, CommandRequestTimeoutMS, null);
               }
               else if(s == "3")
               {
+                displayProgressBar("Making a probe level... ", 10);
                 PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
                 new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.PROBE));
                 connection.SendCommandRequest(planetId, planetImprovement, CommandRequestTimeoutMS, null);
               }
               else if(s == "4")
               {
+                displayProgressBar("Improving hangar... ", 10);
                 PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
                 new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.HANGAR));
                 connection.SendCommandRequest(planetId, planetImprovement, CommandRequestTimeoutMS, null);
               }
               else if(s == "5")
               {
+                displayProgressBar("Improving nanobots... ", 10);
                 PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
                 new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.NANOBOTS));
                 connection.SendCommandRequest(planetId, planetImprovement, CommandRequestTimeoutMS, null);
               }
               else if(s == "q")
               {
+                displayProgressBar("Quitting... ", 10);
                 isConnected = false;
               }
               else
               {
-                Console.WriteLine("No idea about that command, sorry.");
+                displayProgressBar("Checking... ", 10);
+                Console.Write("No idea about that command, sorry.");
               }
 
               System.Threading.Thread.Sleep(1000);
