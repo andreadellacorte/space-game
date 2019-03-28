@@ -124,9 +124,14 @@ namespace Demo
               Console.WriteLine(" 1. Improve mine");
               Console.WriteLine(" 2. Check planet status");
               Console.WriteLine(" 3. Build probe");
+              Console.WriteLine(" 4. Build deposit");
               Console.WriteLine(" Q. Quit");
-
+              Console.WriteLine();
+              
+              Console.Write("Command: ");
               string s = Console.ReadLine();
+              
+              Console.WriteLine();
               
               if(s == "1")
               {
@@ -143,17 +148,19 @@ namespace Demo
                 
                 PlanetInfoResponder.Commands.PlanetInfo.Request planetInfo =
                   new PlanetInfoResponder.Commands.PlanetInfo.Request(new PlanetInfoRequest(planetId));
-                
                 connection.SendCommandRequest(planetId, planetInfo, CommandRequestTimeoutMS, null);
               }
               else if(s == "3")
               {
-                displayProgressBar("TODO... ", 5);
-                // TODO
-                // PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
-                //  new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.PROBE));
-                
-                // connection.SendCommandRequest(planetId, planetImprovement, CommandRequestTimeoutMS, null);
+                PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
+                new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.PROBE));
+                connection.SendCommandRequest(planetId, planetImprovement, CommandRequestTimeoutMS, null);
+              }
+              else if(s == "4")
+              {
+                PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
+                new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.DEPOSIT));
+                connection.SendCommandRequest(planetId, planetImprovement, CommandRequestTimeoutMS, null);
               }
               else if(s == "Q" || s == "q")
               {
@@ -272,9 +279,22 @@ namespace Demo
         var logMessage = String.Format("Planet {0}:", response.Response.Value.Get().Value.name);
         Console.WriteLine(logMessage);
         
-        logMessage = String.Format("  / Level {0} mine - {1} minerals",
+        logMessage = String.Format("  / Production: Level {0} mine - Minerals: {1} / {2} max",
           response.Response.Value.Get().Value.mineLevel,
-          (int) response.Response.Value.Get().Value.minerals);
+          (int) response.Response.Value.Get().Value.minerals,
+          response.Response.Value.Get().Value.depositLevel * 100);
+        Console.WriteLine(logMessage);
+        
+        logMessage = String.Format("  / Spaceships: {0} probes (level {1}) - Total: {2} / {3} max ",
+          response.Response.Value.Get().Value.probes,
+          0,
+          response.Response.Value.Get().Value.probes,
+          response.Response.Value.Get().Value.hangarLevel * 3);
+        Console.WriteLine(logMessage);
+        
+        logMessage = String.Format("  / Storage: Level {0} hangar, Level {1} mineral deposit",
+          response.Response.Value.Get().Value.hangarLevel,
+          response.Response.Value.Get().Value.depositLevel);
         Console.WriteLine(logMessage);
         
         logMessage = String.Format("  / Build Queue: {0} - {1} seconds remaining",

@@ -96,6 +96,9 @@ namespace Demo
       const int default_mine_level = 1;
       const int default_build_queue_time = 0;
       const int default_build_materials = 0;
+      const int default_deposit_level = 1;
+      const int default_probes = 0;
+      const int default_hangar_level = 1;
       
       int random_minerals = random.Next(5000);
       
@@ -133,8 +136,9 @@ namespace Demo
       entity.Add(new Position.Data(new Coordinates(x, 0, z)));
       entity.Add(new PlanetInfo.Data(StarName.Generate(random),
         empty_player_name,
-        default_mine_level, random_minerals,
-        Improvement.NONE, default_build_queue_time, default_build_materials));
+        default_mine_level, random_minerals, default_deposit_level,
+        default_probes, default_hangar_level,
+        Improvement.EMPTY, default_build_queue_time, default_build_materials));
       entity.Add(new PlanetInfoResponder.Data());
       entity.Add(new PlanetImprovementResponder.Data());
       

@@ -199,12 +199,23 @@ namespace Demo
                 // Create new component update object
                 PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
                                                 
-                if(planetInfoData.buildQueue == Improvement.MINE){
+                if(planetInfoData.buildQueue != Improvement.EMPTY){
                   if(planetInfoData.buildQueueTime - SecondsPerFrame <= 0)
                   {
-                    //Create new component update object
-                    planetInfoUpdate.SetMineLevel(planetInfoData.mineLevel+1);
-                    planetInfoUpdate.SetBuildQueue(Improvement.NONE);
+                    switch (planetInfoData.buildQueue)
+                    {
+                      case Improvement.MINE:
+                          planetInfoUpdate.SetMineLevel(planetInfoData.mineLevel+1);
+                          break;
+                      case Improvement.PROBE:
+                          planetInfoUpdate.SetProbes(planetInfoData.probes+1);
+                          break;
+                      default:
+                          Console.WriteLine("Default case");
+                          break;
+                    }
+                    
+                    planetInfoUpdate.SetBuildQueue(Improvement.EMPTY);
                     planetInfoUpdate.SetBuildQueueTime(0);
                   }
                   else
@@ -212,6 +223,7 @@ namespace Demo
                     planetInfoUpdate.SetBuildQueueTime(planetInfoData.buildQueueTime - SecondsPerFrame);
                   }
                 }
+
                 if(planetInfoData.buildMaterials > 0)
                 {
                   planetInfoUpdate.SetMinerals(planetInfoData.minerals - planetInfoData.buildMaterials);
@@ -219,7 +231,10 @@ namespace Demo
                 }
                 else
                 {
-                  planetInfoUpdate.SetMinerals(planetInfoData.minerals + planetInfoData.mineLevel * SecondsPerFrame);
+                  if(planetInfoData.minerals < planetInfoData.depositLevel * 100)
+                  {
+                    planetInfoUpdate.SetMinerals(planetInfoData.minerals + planetInfoData.mineLevel * SecondsPerFrame);
+                  }
                 }
                 
                 connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
@@ -319,7 +334,8 @@ namespace Demo
       {
         PlanetInfoData planetInfoData = viewEntity.entity.Get<PlanetInfo>().Value.Get().Value;
         var planetInfoResponse = new PlanetInfoResponse(planetInfoData.name,
-          planetInfoData.mineLevel, planetInfoData.minerals,
+          planetInfoData.mineLevel, planetInfoData.minerals, planetInfoData.depositLevel,
+          planetInfoData.probes, planetInfoData.hangarLevel,
           planetInfoData.buildQueue, planetInfoData.buildQueueTime);
         var commandResponse = new PlanetInfoResponder.Commands.PlanetInfo.Response(planetInfoResponse);
         connection.SendCommandResponse(request.RequestId, commandResponse);
@@ -343,35 +359,60 @@ namespace Demo
         PlanetInfoData planetInfoData = viewEntity.entity.Get<PlanetInfo>().Value.Get().Value;
         
         string response;
-        int timeRequired = 0;
+        int mineralsCost;
+        int timeRequired;
         
-        if(planetInfoData.buildQueue != Improvement.NONE)
+        if(planetInfoData.buildQueue != Improvement.EMPTY)
         {
-          response = String.Format("Build queue is already full; currently building: {0}", planetInfoData.buildQueue);
+          response = String.Format("Build queue is already full; currently building: {0} ({1} seconds left)",
+            planetInfoData.buildQueue,
+            (int) planetInfoData.buildQueueTime);
         }
-        else if(request.Request.Get().Value.improvement == Improvement.MINE){
-          if(planetInfoData.minerals < planetInfoData.mineLevel * 20)
+        else
+        {
+          switch(request.Request.Get().Value.improvement)
           {
-            response = String.Format("Not enough minerals to build mine level {0}; requires {1} minerals", planetInfoData.mineLevel + 1, planetInfoData.mineLevel * 20);
+            case Improvement.MINE:
+              mineralsCost = planetInfoData.mineLevel * 20;
+              timeRequired = planetInfoData.mineLevel * 12;
+              break;
+            case Improvement.PROBE:
+              mineralsCost = 80;
+              timeRequired = 30;
+              break;
+            case Improvement.DEPOSIT:
+              mineralsCost = planetInfoData.depositLevel * 80;
+              timeRequired = planetInfoData.depositLevel * 30;;
+              break;
+            default:
+              throw new SystemException("Unknown improvement type");
+              break;
+          }
+          
+          if(planetInfoData.minerals < mineralsCost)
+          {
+            response = String.Format("Not enough minerals to build {0}; requires {1} minerals ({2} available)",
+              request.Request.Get().Value.improvement,
+              mineralsCost,
+              (int) planetInfoData.minerals);
+          }
+          else if(request.Request.Get().Value.improvement == Improvement.PROBE && planetInfoData.probes == planetInfoData.hangarLevel * 3)
+          {
+            response = String.Format("Not enough space in your hangar to build a probe");
           }
           else
           {
             //Create new component update object
             PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
             planetInfoUpdate.SetBuildQueue(request.Request.Get().Value.improvement);
-            planetInfoUpdate.SetBuildQueueTime(planetInfoData.mineLevel * 12);
-            planetInfoUpdate.SetBuildMaterials(planetInfoData.mineLevel * 20);
+            planetInfoUpdate.SetBuildQueueTime(timeRequired);
+            planetInfoUpdate.SetBuildMaterials(mineralsCost);
             connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
-            response = String.Format("Started building {0} on Planet {1}", request.Request.Get().Value.improvement, planetInfoData.name);
-            timeRequired = planetInfoData.mineLevel * 12;
+            response = String.Format("Started building {0} on Planet {1} (it'll take {2} seconds)", request.Request.Get().Value.improvement, planetInfoData.name, timeRequired);
           }
         }
-        else
-        {
-          throw new SystemException("Unknown improvement type");
-        }
         
-        var planetImprovementResponse = new PlanetImprovementResponse(response, timeRequired);
+        var planetImprovementResponse = new PlanetImprovementResponse(response);
         var commandResponse = new PlanetImprovementResponder.Commands.PlanetImprovement.Response(planetImprovementResponse);
         connection.SendCommandResponse(request.RequestId, commandResponse);
       }
