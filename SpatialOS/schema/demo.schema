@@ -8,6 +8,8 @@ enum Improvement {
 	MINE = 1;
 	PROBE = 2;
 	DEPOSIT = 3;
+	HANGAR = 4;
+	NANOBOTS = 5;
 }
 
 // PlanetInfo
@@ -21,9 +23,10 @@ component PlanetInfo {
 	int32 deposit_level = 5;
 	int32 probes = 6;
 	int32 hangar_level = 7;
-	Improvement build_queue = 8;
-	double build_queue_time = 9;
-	int32 build_materials = 10;
+	int32 nanobot_level = 8;
+	Improvement build_queue = 9;
+	double build_queue_time = 10;
+	int32 build_materials = 11;
 }
 
 // AssignPlanetResponder
@@ -51,8 +54,9 @@ type PlanetInfoResponse {
 	int32 deposit_level = 4;
 	int32 probes = 5;
 	int32 hangar_level = 6;
-	Improvement build_queue = 7;
-	double build_queue_time = 8;
+	int32 nanobot_level = 7;
+	Improvement build_queue = 8;
+	double build_queue_time = 9;
 }
 
 type PlanetInfoRequest {

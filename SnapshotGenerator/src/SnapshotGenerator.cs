@@ -99,6 +99,7 @@ namespace Demo
       const int default_deposit_level = 1;
       const int default_probes = 0;
       const int default_hangar_level = 1;
+      const int default_nanobots_level = 1;
       
       int random_minerals = random.Next(5000);
       
@@ -138,6 +139,7 @@ namespace Demo
         empty_player_name,
         default_mine_level, random_minerals, default_deposit_level,
         default_probes, default_hangar_level,
+        default_nanobots_level,
         Improvement.EMPTY, default_build_queue_time, default_build_materials));
       entity.Add(new PlanetInfoResponder.Data());
       entity.Add(new PlanetImprovementResponder.Data());

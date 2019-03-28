@@ -49,9 +49,16 @@ namespace Demo
         printUsage();
         return ErrorExitStatus;
       }
+      
+      Console.Clear();
 
-      Console.WriteLine("Client Starting...");
+      Console.ForegroundColor = ConsoleColor.White;
+      Console.BackgroundColor = ConsoleColor.DarkBlue;
+      Console.WriteLine("Welcome to space-game!");
+      Console.WriteLine("======================");
       Console.WriteLine();
+      Console.ResetColor();
+
       using (var connection = ConnectClient(arguments))
       {
         using (var dispatcher = new Dispatcher())
@@ -120,22 +127,40 @@ namespace Demo
               }
               
               // Start user interaction loop
+              Console.ForegroundColor = ConsoleColor.DarkRed;
               Console.WriteLine("Please enter your command:");
+              Console.WriteLine("==========================");
+              Console.ResetColor();
               Console.WriteLine(" 1. Improve mine");
-              Console.WriteLine(" 2. Check planet status");
+              Console.WriteLine(" 2. Build mineral deposit");
               Console.WriteLine(" 3. Build probe");
-              Console.WriteLine(" 4. Build deposit");
-              Console.WriteLine(" Q. Quit");
+              Console.WriteLine(" 4. Build hangar");
+              Console.WriteLine(" 5. Improve nanobots");
+              Console.WriteLine(" q. Quit");
               Console.WriteLine();
-              
-              Console.Write("Command: ");
+              Console.WriteLine(" Leave empty to check planet status");
+              Console.WriteLine();
+
+              Console.ForegroundColor = ConsoleColor.DarkRed;
+              Console.Write("Command:");
+              Console.ResetColor();
+              Console.Write(" ");
+
               string s = Console.ReadLine();
               
               Console.WriteLine();
               
-              if(s == "1")
+              if(s == "")
               {
-                displayProgressBar("Improving mine level... ", 5);
+                displayProgressBar("Checking planet status... ", 10);
+                
+                PlanetInfoResponder.Commands.PlanetInfo.Request planetInfo =
+                  new PlanetInfoResponder.Commands.PlanetInfo.Request(new PlanetInfoRequest(planetId));
+                connection.SendCommandRequest(planetId, planetInfo, CommandRequestTimeoutMS, null);
+              }
+              else if(s == "1")
+              {
+                displayProgressBar("Improving mine level... ", 10);
                 
                 PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
                   new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.MINE));
@@ -144,11 +169,9 @@ namespace Demo
               }
               else if(s == "2")
               {
-                displayProgressBar("Checking planet status... ", 5);
-                
-                PlanetInfoResponder.Commands.PlanetInfo.Request planetInfo =
-                  new PlanetInfoResponder.Commands.PlanetInfo.Request(new PlanetInfoRequest(planetId));
-                connection.SendCommandRequest(planetId, planetInfo, CommandRequestTimeoutMS, null);
+                PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
+                new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.DEPOSIT));
+                connection.SendCommandRequest(planetId, planetImprovement, CommandRequestTimeoutMS, null);
               }
               else if(s == "3")
               {
@@ -159,10 +182,16 @@ namespace Demo
               else if(s == "4")
               {
                 PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
-                new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.DEPOSIT));
+                new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.HANGAR));
                 connection.SendCommandRequest(planetId, planetImprovement, CommandRequestTimeoutMS, null);
               }
-              else if(s == "Q" || s == "q")
+              else if(s == "5")
+              {
+                PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
+                new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.NANOBOTS));
+                connection.SendCommandRequest(planetId, planetImprovement, CommandRequestTimeoutMS, null);
+              }
+              else if(s == "q")
               {
                 isConnected = false;
               }
@@ -244,7 +273,9 @@ namespace Demo
 
         var logMessage = String.Format("Assigned Planet '{0}' (EntityId {1}) to this client", planetName, planetId.Id);
       
+        Console.ForegroundColor = ConsoleColor.DarkGreen;
         Console.WriteLine(logMessage);
+        Console.ResetColor();
         Console.WriteLine();
         connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
       }
@@ -276,9 +307,11 @@ namespace Demo
       }
       else
       {
+        Console.ForegroundColor = ConsoleColor.DarkGreen;
         var logMessage = String.Format("Planet {0}:", response.Response.Value.Get().Value.name);
         Console.WriteLine(logMessage);
         
+        Console.ForegroundColor = ConsoleColor.DarkBlue;
         logMessage = String.Format("  / Production: Level {0} mine - Minerals: {1} / {2} max",
           response.Response.Value.Get().Value.mineLevel,
           (int) response.Response.Value.Get().Value.minerals,
@@ -297,11 +330,16 @@ namespace Demo
           response.Response.Value.Get().Value.depositLevel);
         Console.WriteLine(logMessage);
         
+        logMessage = String.Format("  / Tech: Level {0} nanobots",
+          response.Response.Value.Get().Value.nanobotLevel);
+        Console.WriteLine(logMessage);
+        
         logMessage = String.Format("  / Build Queue: {0} - {1} seconds remaining",
           response.Response.Value.Get().Value.buildQueue,
           (int) response.Response.Value.Get().Value.buildQueueTime);
         Console.WriteLine(logMessage);
         Console.WriteLine();
+        Console.ResetColor();
 
         connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
       }
@@ -333,8 +371,10 @@ namespace Demo
       }
       else
       {
+        Console.ForegroundColor = ConsoleColor.DarkGreen;
         Console.WriteLine(response.Response.Value.Get().Value.message);
         Console.WriteLine();
+        Console.ResetColor();
         connection.SendLogMessage(LogLevel.Info, LoggerName, response.Response.Value.Get().Value.message);
       }
     }

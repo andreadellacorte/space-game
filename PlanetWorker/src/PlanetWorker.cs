@@ -205,14 +205,23 @@ namespace Demo
                     switch (planetInfoData.buildQueue)
                     {
                       case Improvement.MINE:
-                          planetInfoUpdate.SetMineLevel(planetInfoData.mineLevel+1);
-                          break;
+                        planetInfoUpdate.SetMineLevel(planetInfoData.mineLevel + 1);
+                        break;
                       case Improvement.PROBE:
-                          planetInfoUpdate.SetProbes(planetInfoData.probes+1);
+                        planetInfoUpdate.SetProbes(planetInfoData.probes+1);
+                        break;
+                      case Improvement.HANGAR:
+                        planetInfoUpdate.SetHangarLevel(planetInfoData.hangarLevel + 1);
+                        break;
+                      case Improvement.DEPOSIT:
+                        planetInfoUpdate.SetDepositLevel(planetInfoData.depositLevel + 1);
+                        break;
+                        case Improvement.NANOBOTS:
+                          planetInfoUpdate.SetNanobotLevel(planetInfoData.nanobotLevel + 1);
                           break;
                       default:
-                          Console.WriteLine("Default case");
-                          break;
+                        throw new SystemException("Unknown improvement type");
+                        break;
                     }
                     
                     planetInfoUpdate.SetBuildQueue(Improvement.EMPTY);
@@ -336,6 +345,7 @@ namespace Demo
         var planetInfoResponse = new PlanetInfoResponse(planetInfoData.name,
           planetInfoData.mineLevel, planetInfoData.minerals, planetInfoData.depositLevel,
           planetInfoData.probes, planetInfoData.hangarLevel,
+          planetInfoData.nanobotLevel,
           planetInfoData.buildQueue, planetInfoData.buildQueueTime);
         var commandResponse = new PlanetInfoResponder.Commands.PlanetInfo.Response(planetInfoResponse);
         connection.SendCommandResponse(request.RequestId, commandResponse);
@@ -382,7 +392,15 @@ namespace Demo
               break;
             case Improvement.DEPOSIT:
               mineralsCost = planetInfoData.depositLevel * 80;
-              timeRequired = planetInfoData.depositLevel * 30;;
+              timeRequired = planetInfoData.depositLevel * 30;
+              break;
+            case Improvement.HANGAR:
+              mineralsCost = planetInfoData.hangarLevel * 150;
+              timeRequired = planetInfoData.hangarLevel * 120;
+              break;
+            case Improvement.NANOBOTS:
+              mineralsCost = planetInfoData.nanobotLevel * 300;
+              timeRequired = planetInfoData.nanobotLevel * 150;
               break;
             default:
               throw new SystemException("Unknown improvement type");
@@ -405,7 +423,7 @@ namespace Demo
             //Create new component update object
             PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
             planetInfoUpdate.SetBuildQueue(request.Request.Get().Value.improvement);
-            planetInfoUpdate.SetBuildQueueTime(timeRequired);
+            planetInfoUpdate.SetBuildQueueTime(timeRequired / planetInfoData.nanobotLevel);
             planetInfoUpdate.SetBuildMaterials(mineralsCost);
             connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
             response = String.Format("Started building {0} on Planet {1} (it'll take {2} seconds)", request.Request.Get().Value.improvement, planetInfoData.name, timeRequired);
