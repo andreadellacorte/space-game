@@ -15,17 +15,22 @@ namespace Demo
     private const string WorkerType = "PlanetWorker";
     private const string LoggerName = "PlanetWorker.cs";
     private const int ErrorExitStatus = 1;
-    private const uint GetOpListTimeoutInMilliseconds = 100;
+    private const uint GetOpListTimeoutInMilliseconds = 0;
     private const string playerType = "Player";
+    private const int SecondsPerFrame = 2;
     
     private class ViewEntity
     {
         public bool hasAuthority;
-        public bool isPlanet;
         public Entity entity;
     }
 
     private static Dictionary<EntityId, ViewEntity> EntityView = new Dictionary<EntityId, ViewEntity>();
+    
+    private static bool isPlanet(Entity entity)
+    {
+      return entity.GetComponentIds().Contains(PlanetInfo.ComponentId);
+    }
 
     static int Main(string[] arguments)
     {
@@ -78,20 +83,20 @@ namespace Demo
             {
               if(op.Authority == Authority.Authoritative)
               {
-                logMessage = String.Format("Gained authority over entityId {0}", op.EntityId);
-                connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+                //logMessage = String.Format("Gained authority over entityId {0}", op.EntityId);
+                //connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
                 entity.hasAuthority = true;
               }
               else if (op.Authority == Authority.NotAuthoritative)
               {
-                logMessage = String.Format("Lost authority over entityId {0}", op.EntityId);
-                connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+                //logMessage = String.Format("Lost authority over entityId {0}", op.EntityId);
+                //connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
                 entity.hasAuthority = false;
               }
               else if (op.Authority == Authority.AuthorityLossImminent)
               {
-                logMessage = String.Format("Lost authority over entityId {0}", op.EntityId);
-                connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+                //logMessage = String.Format("Lost authority over entityId {0}", op.EntityId);
+                //connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
                 entity.hasAuthority = false;
               }
             }
@@ -99,28 +104,26 @@ namespace Demo
           
           dispatcher.OnAddComponent<PlanetInfo>(op =>
           {
-            var logMessage = String.Format("Adding PlanetInfo Component for entityId {0}", op.EntityId);
-            connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+            //var logMessage = String.Format("Adding PlanetInfo Component for entityId {0}", op.EntityId);
+            //connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
 
             ViewEntity entity;
             if (EntityView.TryGetValue(op.EntityId, out entity))
             {
                 entity.entity.Add<PlanetInfo>(op.Data);
-                entity.isPlanet = true;
             }
             else
             {
                 ViewEntity newEntity = new ViewEntity();
                 EntityView.Add(op.EntityId, newEntity);
                 newEntity.entity.Add<PlanetInfo>(op.Data);
-                newEntity.isPlanet = true;
             }
           });
           
           dispatcher.OnComponentUpdate<PlanetInfo>(op=>
           {
-            var logMessage = String.Format("Updating PlanetInfo Component for entityId {0}", op.EntityId);
-            connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+            //var logMessage = String.Format("Updating PlanetInfo Component for entityId {0}", op.EntityId);
+            //connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
 
             ViewEntity entity;
             if (EntityView.TryGetValue(op.EntityId, out entity))
@@ -132,8 +135,8 @@ namespace Demo
           
           dispatcher.OnAddEntity(op =>
           {
-            var logMessage = String.Format("Adding entityId {0}", op.EntityId);
-            connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+            //var logMessage = String.Format("Adding entityId {0}", op.EntityId);
+            //connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
 
             // AddEntity will always be followed by OnAddComponent
             ViewEntity newEntity = new ViewEntity();
@@ -144,8 +147,8 @@ namespace Demo
           
           dispatcher.OnRemoveEntity(op =>
           {
-            var logMessage = String.Format("Removing entityId {0}", op.EntityId);
-            connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+            //var logMessage = String.Format("Removing entityId {0}", op.EntityId);
+            //connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
             EntityView.Remove(op.EntityId);
           });
 
@@ -161,13 +164,46 @@ namespace Demo
 
           connection.SendLogMessage(LogLevel.Info, LoggerName,
             "Successfully connected using TCP and the Receptionist");
+            
+          var maxWait = System.TimeSpan.FromMilliseconds(1000f * SecondsPerFrame);
+          var stopwatch = new System.Diagnostics.Stopwatch();
 
           while (isConnected)
           {
-            using (var opList = connection.GetOpList(GetOpListTimeoutInMilliseconds))
+            // Setup Timer
+            stopwatch.Reset();
+            stopwatch.Start();
+            
+            var opList = connection.GetOpList(GetOpListTimeoutInMilliseconds);
+            dispatcher.Process(opList);
+            
+            foreach (var pair in EntityView)
             {
-              dispatcher.Process(opList);
+              if(isPlanet(pair.Value.entity) && pair.Value.hasAuthority) //Only do this update if this worker has write access to the entity
+              {
+                EntityId planetId = pair.Key;
+                Entity entity = pair.Value.entity;
+                
+                if (entity == null)
+                {
+                    throw new NullReferenceException("View Entities Enum has returned a null entity for EntityID " + planetId.ToString());
+                }
+                
+                PlanetInfoData planetInfoData = entity.Get<PlanetInfo>().Value.Get().Value;
+                
+                //Create new component update object
+                PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
+                planetInfoUpdate.SetMinerals(planetInfoData.minerals + planetInfoData.mineLevel);
+                
+                // Send the updates
+                connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
+              }
             }
+            
+            // Wait for a bit if necessary
+            stopwatch.Stop();
+            var waitFor = maxWait.Subtract(stopwatch.Elapsed);
+            System.Threading.Thread.Sleep(waitFor.Milliseconds > 0 ? waitFor : System.TimeSpan.Zero);
           }
         }
       }
@@ -199,7 +235,7 @@ namespace Demo
         
       foreach (KeyValuePair<EntityId, ViewEntity> pair in EntityView)
       {
-        if(!pair.Value.hasAuthority || !pair.Value.isPlanet)
+        if(!pair.Value.hasAuthority || !isPlanet(pair.Value.entity))
         {
           logMessage = String.Format("Skipping entity with entityId {0}", pair.Key);
           connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
@@ -253,10 +289,10 @@ namespace Demo
       var logMessage = String.Format("Received PlanetInfo Command for EntityId {0}", request.Request.Get().Value.planetId);
       connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
       
-      ViewEntity entity;
-      if (EntityView.TryGetValue(request.Request.Get().Value.planetId, out entity))
+      ViewEntity viewEntity;
+      if (EntityView.TryGetValue(request.Request.Get().Value.planetId, out viewEntity))
       {
-        PlanetInfoData planetInfoData = entity.entity.Get<PlanetInfo>().Value.Get().Value;
+        PlanetInfoData planetInfoData = viewEntity.entity.Get<PlanetInfo>().Value.Get().Value;
         var planetInfoResponse = new PlanetInfoResponse(planetInfoData.name, planetInfoData.minerals);
         var commandResponse = new PlanetInfoResponder.Commands.PlanetInfo.Response(planetInfoResponse);
         connection.SendCommandResponse(request.RequestId, commandResponse);

@@ -17,14 +17,15 @@ namespace Demo
     private const string WorkerType = "InteractiveClient";
     private const string LoggerName = "Client.cs";
     private const int ErrorExitStatus = 1;
-    private const uint GetOpListTimeoutInMilliseconds = 100;
-    private const uint CommandRequestTimeoutMS = 100;
+    private const uint GetOpListTimeoutInMilliseconds = 0;
+    private const uint CommandRequestTimeoutMS = 0;
     private const int pingIntervalMs = 5000;
     
     private static readonly Random random = new Random();
     private static string playerId;
     private static EntityId planetId;
     private static string planetName;
+    private static bool isWaiting;
     
     private static readonly EntityId[] PlanetAuthorityMarkersEntityIds =
     {
@@ -57,6 +58,7 @@ namespace Demo
         using (var dispatcher = new Dispatcher())
         {
           var isConnected = true;
+          
 
           dispatcher.OnDisconnect(op =>
           {
@@ -113,6 +115,10 @@ namespace Demo
                 System.Threading.Thread.Sleep(1500);
               }
               
+              while(isWaiting){
+                System.Threading.Thread.Sleep(500);
+              }
+              
               // Start user interaction loop
               Console.WriteLine("Please enter your command:");
               Console.WriteLine(" 1. Build mine");
@@ -131,6 +137,7 @@ namespace Demo
                   new PlanetInfoResponder.Commands.PlanetInfo.Request(new PlanetInfoRequest(planetId));
                 
                 connection.SendCommandRequest(planetId, planetInfo, CommandRequestTimeoutMS, null);
+                isWaiting = true;
               }
               else if(s == "Q" || s == "q")
               {
@@ -204,6 +211,8 @@ namespace Demo
         Console.WriteLine(logMessage);
         connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
       }
+      
+      isWaiting = false;
     }
     
     private static void HandlePlanetInfoResponse(CommandResponseOp<PlanetInfoResponder.Commands.PlanetInfo> response, Connection connection)
@@ -239,6 +248,8 @@ namespace Demo
         Console.WriteLine(logMessage);
         connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
       }
+      
+      isWaiting = false;
     }
   }
 }
