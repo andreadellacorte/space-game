@@ -184,18 +184,16 @@ namespace Demo
                 EntityId planetId = pair.Key;
                 Entity entity = pair.Value.entity;
                 
-                if (entity == null)
-                {
-                    throw new NullReferenceException("View Entities Enum has returned a null entity for EntityID " + planetId.ToString());
-                }
-                
                 PlanetInfoData planetInfoData = entity.Get<PlanetInfo>().Value.Get().Value;
+                
+                if(planetInfoData.playerId == "") // Don't do this update if the planet is uninhabited
+                {
+                  continue;
+                }
                 
                 //Create new component update object
                 PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
                 planetInfoUpdate.SetMinerals(planetInfoData.minerals + planetInfoData.mineLevel);
-                
-                // Send the updates
                 connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
               }
             }
@@ -258,21 +256,21 @@ namespace Demo
           var planetId = pair.Key;
           var planetName = planetInfoData.name;
           var playerId = request.Request.Get().Value.playerId;
-          
+
           //Create new component update object
           PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
           planetInfoUpdate.SetPlayerId(playerId);
-          
+
           // Send the updates
           connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
-          
+
           // Send the assigned planet to the client
           var assignPlanetResponse = new AssignPlanetResponse(planetId, planetName);
           var commandResponse = new AssignPlanetResponder.Commands.AssignPlanet.Response(assignPlanetResponse);
           connection.SendCommandResponse(request.RequestId, commandResponse);
-          
+
           planetAssigned = true;
-          
+
           break;
         }
       }
