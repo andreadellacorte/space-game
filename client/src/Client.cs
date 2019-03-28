@@ -252,10 +252,12 @@ namespace Demo
       }
       else
       {
-        var logMessage = String.Format("Received PlanetInfo from '{0}': Level {1} mine, {2} minerals",
+        var logMessage = String.Format("Received PlanetInfo from '{0}' / Level {1} mine - {2} minerals / Build Queue: {3} - {4} seconds remaining",
           response.Response.Value.Get().Value.name,
           response.Response.Value.Get().Value.mineLevel,
-          response.Response.Value.Get().Value.minerals);
+          response.Response.Value.Get().Value.minerals,
+          response.Response.Value.Get().Value.buildQueue,
+          response.Response.Value.Get().Value.buildQueueTime);
       
         Console.WriteLine(logMessage);
         connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
@@ -290,10 +292,8 @@ namespace Demo
       }
       else
       {
-        var logMessage = String.Format("Sent request to improve mine");
-      
-        Console.WriteLine(logMessage);
-        connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+        Console.WriteLine(response.Response.Value.Get().Value.message);
+        connection.SendLogMessage(LogLevel.Info, LoggerName, response.Response.Value.Get().Value.message);
       }
       
       isWaiting = false;

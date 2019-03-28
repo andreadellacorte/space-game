@@ -20,6 +20,10 @@ mkdir -p "${OUT_DIR}"
   --load_all_schema_on_schema_path \
   "${SCHEMA_DIR}"/*.schema \
   "${SCHEMA_DIR}"/improbable/*.schema
+  
+if [ $# -gt 0 ]; then
+  BUILD_PLATFORMS=($1)
+fi
 
 # Build a worker executable for each target build platform
 for PLATFORM in "${BUILD_PLATFORMS[@]}"; do

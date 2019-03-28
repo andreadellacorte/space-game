@@ -196,9 +196,25 @@ namespace Demo
                   continue;
                 }
                 
-                //Create new component update object
+                // Create new component update object
                 PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
+                                                
+                if(planetInfoData.buildQueue == Improvement.MINE){
+                  if(planetInfoData.buildQueueTime - 2 <= 0)
+                  {
+                    //Create new component update object
+                    planetInfoUpdate.SetMineLevel(planetInfoData.mineLevel+1);
+                    planetInfoUpdate.SetBuildQueue(Improvement.NONE);
+                    planetInfoUpdate.SetBuildQueueTime(0);
+                  }
+                  else
+                  {
+                    planetInfoUpdate.SetBuildQueueTime(planetInfoData.buildQueueTime - 2);
+                  }
+                }
+                
                 planetInfoUpdate.SetMinerals(planetInfoData.minerals + planetInfoData.mineLevel);
+                
                 connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
               }
             }
@@ -294,7 +310,9 @@ namespace Demo
       if (EntityView.TryGetValue(request.Request.Get().Value.planetId, out viewEntity))
       {
         PlanetInfoData planetInfoData = viewEntity.entity.Get<PlanetInfo>().Value.Get().Value;
-        var planetInfoResponse = new PlanetInfoResponse(planetInfoData.name, planetInfoData.mineLevel, planetInfoData.minerals);
+        var planetInfoResponse = new PlanetInfoResponse(planetInfoData.name,
+          planetInfoData.mineLevel, planetInfoData.minerals,
+          planetInfoData.buildQueue, planetInfoData.buildQueueTime);
         var commandResponse = new PlanetInfoResponder.Commands.PlanetInfo.Response(planetInfoResponse);
         connection.SendCommandResponse(request.RequestId, commandResponse);
       }
@@ -316,20 +334,28 @@ namespace Demo
         var planetId = request.Request.Get().Value.planetId;
         PlanetInfoData planetInfoData = viewEntity.entity.Get<PlanetInfo>().Value.Get().Value;
         
-        if(request.Request.Get().Value.improvement == Improvement.MINE){
+        string response;
+        
+        if(planetInfoData.buildQueue != Improvement.NONE)
+        {
+          response = String.Format("Build queue is already full; currently building: {0}", planetInfoData.buildQueue);
+        }
+        else if(request.Request.Get().Value.improvement == Improvement.MINE){
           //Create new component update object
           PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
-          planetInfoUpdate.SetMineLevel(planetInfoData.mineLevel+1);
+          planetInfoUpdate.SetBuildQueue(request.Request.Get().Value.improvement);
+          planetInfoUpdate.SetBuildQueueTime((int) planetInfoData.mineLevel*12);
           connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
-
-          var planetImprovementResponse = new PlanetImprovementResponse();
-          var commandResponse = new PlanetImprovementResponder.Commands.PlanetImprovement.Response(planetImprovementResponse);
-          connection.SendCommandResponse(request.RequestId, commandResponse);
+          response = String.Format("Started building {0} on Planet {1}", request.Request.Get().Value.improvement, planetInfoData.name);
         }
         else
         {
           throw new SystemException("Unknown improvement type");
         }
+        
+        var planetImprovementResponse = new PlanetImprovementResponse(response);
+        var commandResponse = new PlanetImprovementResponder.Commands.PlanetImprovement.Response(planetImprovementResponse);
+        connection.SendCommandResponse(request.RequestId, commandResponse);
       }
       else
       {

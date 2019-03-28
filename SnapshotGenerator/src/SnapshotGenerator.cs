@@ -93,6 +93,10 @@ namespace Demo
     {
       var entity = new Entity();
       const string entityType = "Planet";
+      const string empty_player_name = "";
+      const int default_mine_level = 1;
+      const int default_minerals = 1;
+      const int default_build_queue_time = 0;
       
       // Defines worker attribute requirements for workers that can read a component.
       // workers with an attribute of "client" OR workerType will have read access
@@ -124,7 +128,10 @@ namespace Demo
       entity.Add(new Persistence.Data());
       entity.Add(new Metadata.Data(entityType));
       entity.Add(new Position.Data(new Coordinates(x, 0, z)));
-      entity.Add(new PlanetInfo.Data(StarName.Generate(random),"", 1, 15));
+      entity.Add(new PlanetInfo.Data(StarName.Generate(random),
+        empty_player_name,
+        default_mine_level, default_minerals,
+        Improvement.NONE, default_build_queue_time));
       entity.Add(new PlanetInfoResponder.Data());
       entity.Add(new PlanetImprovementResponder.Data());
       

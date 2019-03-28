@@ -3,18 +3,23 @@
 # This script builds the full project by running all other provided shell scripts in sequence
 
 FOLDER='/Users/andrea/Documents/GitHub/space-game'
+BUILD_SYSTEM='macOS64'
 
 function n() {
   osascript -e "display notification \"$1\" with title \"SpatialOS\""
 }
 
 function b() { # Build Project
+  if [ -z $1 ]; then
+    1='empty'
+  fi
+  
   start=`gdate +%s%N`
-  $FOLDER/SpatialOS/scripts/build_project.sh $1
+  $FOLDER/SpatialOS/scripts/build_project.sh $1 $BUILD_SYSTEM
   end=`gdate +%s%N`
   build_time=$( echo "scale=2;($end - $start)/1000000000" | bc -l )
   
-  if [ $# -gt 0 ]; then
+  if [ $1 != "empty" ]; then
     n "$(basename $1) Build Complete in $build_time seconds"
   else
     n "Project Build Complete in $build_time seconds"

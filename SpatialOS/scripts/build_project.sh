@@ -10,14 +10,20 @@ source ./utils.sh
 ./download_dependencies.sh
 ./generate_schema_descriptor.sh
 
-if [ $# -gt 0 ]; then
+echo $1
+
+if [ $1 != "empty" ]; then
   WORKER_DIRS=($1)
 fi
 
 # Build all workers in the project
 for WORKER_DIR in "${WORKER_DIRS[@]}"; do
   pushd "${WORKER_DIR}"
-  ../SpatialOS/scripts/build_worker.sh
+  if [ $# -gt 1 ]; then
+    ../SpatialOS/scripts/build_worker.sh $2
+  else
+    ../SpatialOS/scripts/build_worker.sh
+  fi
   popd
 done
 
