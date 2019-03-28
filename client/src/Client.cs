@@ -114,9 +114,9 @@ namespace Demo
                 AssignPlanetResponder.Commands.AssignPlanet.Request assignPlanet =
                   new AssignPlanetResponder.Commands.AssignPlanet.Request(new AssignPlanetRequest(playerId));
 
-                connection.SendCommandRequest(PlanetAuthorityMarkersEntityIds[random.Next(PlanetAuthorityMarkersEntityIds.Length)], assignPlanet, CommandRequestTimeoutMS, null);
+                connection.SendCommandRequest(PlanetAuthorityMarkersEntityIds[random.Next(PlanetAuthorityMarkersEntityIds.Length)], assignPlanet, 1500, null);
                 
-                System.Threading.Thread.Sleep(1500);
+                System.Threading.Thread.Sleep(1600);
               }
               
               while(isWaiting){
@@ -158,6 +158,8 @@ namespace Demo
               {
                 Console.WriteLine("No idea about that command, sorry.");
               }
+
+              System.Threading.Thread.Sleep(1000);
             }
           }).Start();
           
@@ -255,9 +257,9 @@ namespace Demo
         var logMessage = String.Format("Received PlanetInfo from '{0}' / Level {1} mine - {2} minerals / Build Queue: {3} - {4} seconds remaining",
           response.Response.Value.Get().Value.name,
           response.Response.Value.Get().Value.mineLevel,
-          response.Response.Value.Get().Value.minerals,
+          (int) response.Response.Value.Get().Value.minerals,
           response.Response.Value.Get().Value.buildQueue,
-          response.Response.Value.Get().Value.buildQueueTime);
+          (int) response.Response.Value.Get().Value.buildQueueTime);
       
         Console.WriteLine(logMessage);
         connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);

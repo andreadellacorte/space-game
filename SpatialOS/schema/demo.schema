@@ -14,10 +14,11 @@ component PlanetInfo {
 	id = 101;
 	string name = 1;
 	string player_id = 2;
-	uint32 mine_level = 3;
-	uint32 minerals = 4;
+	int32 mine_level = 3;
+	double minerals = 4;
 	Improvement build_queue = 5;
-	int32 build_queue_time = 6;
+	double build_queue_time = 6;
+	int32 build_materials = 7;
 }
 
 // AssignPlanetResponder
@@ -40,10 +41,10 @@ component AssignPlanetResponder {
 
 type PlanetInfoResponse {
 	string name = 1;
-	uint32 mine_level = 2;
-	uint32 minerals = 3;
+	int32 mine_level = 2;
+	double minerals = 3;
 	Improvement build_queue = 4;
-	int32 build_queue_time = 5;
+	double build_queue_time = 5;
 }
 
 type PlanetInfoRequest {

@@ -17,7 +17,7 @@ namespace Demo
     private const int ErrorExitStatus = 1;
     private const uint GetOpListTimeoutInMilliseconds = 0;
     private const string playerType = "Player";
-    private const int SecondsPerFrame = 2;
+    private const double SecondsPerFrame = 0.2;
     
     private class ViewEntity
     {
@@ -200,7 +200,7 @@ namespace Demo
                 PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
                                                 
                 if(planetInfoData.buildQueue == Improvement.MINE){
-                  if(planetInfoData.buildQueueTime - 2 <= 0)
+                  if(planetInfoData.buildQueueTime - SecondsPerFrame <= 0)
                   {
                     //Create new component update object
                     planetInfoUpdate.SetMineLevel(planetInfoData.mineLevel+1);
@@ -209,11 +209,18 @@ namespace Demo
                   }
                   else
                   {
-                    planetInfoUpdate.SetBuildQueueTime(planetInfoData.buildQueueTime - 2);
+                    planetInfoUpdate.SetBuildQueueTime(planetInfoData.buildQueueTime - SecondsPerFrame);
                   }
                 }
-                
-                planetInfoUpdate.SetMinerals(planetInfoData.minerals + planetInfoData.mineLevel);
+                if(planetInfoData.buildMaterials > 0)
+                {
+                  planetInfoUpdate.SetMinerals(planetInfoData.minerals - planetInfoData.buildMaterials);
+                  planetInfoUpdate.SetBuildMaterials(0);
+                }
+                else
+                {
+                  planetInfoUpdate.SetMinerals(planetInfoData.minerals + planetInfoData.mineLevel * SecondsPerFrame);
+                }
                 
                 connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
               }
@@ -280,6 +287,7 @@ namespace Demo
 
           //Create new component update object
           PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
+          planetInfoUpdate.SetMinerals(10);
           planetInfoUpdate.SetPlayerId(playerId);
           connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
 
@@ -341,12 +349,20 @@ namespace Demo
           response = String.Format("Build queue is already full; currently building: {0}", planetInfoData.buildQueue);
         }
         else if(request.Request.Get().Value.improvement == Improvement.MINE){
-          //Create new component update object
-          PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
-          planetInfoUpdate.SetBuildQueue(request.Request.Get().Value.improvement);
-          planetInfoUpdate.SetBuildQueueTime((int) planetInfoData.mineLevel*12);
-          connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
-          response = String.Format("Started building {0} on Planet {1}", request.Request.Get().Value.improvement, planetInfoData.name);
+          if(planetInfoData.minerals < planetInfoData.mineLevel * 20)
+          {
+            response = String.Format("Not enough minerals to build mine level {0}; requires {1} minerals", planetInfoData.mineLevel + 1, planetInfoData.mineLevel * 20);
+          }
+          else
+          {
+            //Create new component update object
+            PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
+            planetInfoUpdate.SetBuildQueue(request.Request.Get().Value.improvement);
+            planetInfoUpdate.SetBuildQueueTime(planetInfoData.mineLevel * 12);
+            planetInfoUpdate.SetBuildMaterials(planetInfoData.mineLevel * 20);
+            connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
+            response = String.Format("Started building {0} on Planet {1}", request.Request.Get().Value.improvement, planetInfoData.name);
+          }
         }
         else
         {
