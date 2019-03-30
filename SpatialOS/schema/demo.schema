@@ -27,17 +27,22 @@ component PlanetInfo {
 	Improvement build_queue = 9;
 	double build_queue_time = 10;
 	int32 build_materials = 11;
+	string password = 12;
 }
 
 // AssignPlanetResponder
 
+type AssignPlanetRequest {
+	string player_id = 1;
+	EntityId planet_id = 2;
+	string password = 3;
+}
+
 type AssignPlanetResponse {
 	EntityId planet_id = 1;
 	string planet_name = 2;
-}
-
-type AssignPlanetRequest {
-	string player_id = 1;
+	string password = 3;
+	string log_message = 4;
 }
 
 component AssignPlanetResponder {
