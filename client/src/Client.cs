@@ -1,6 +1,7 @@
 // Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
@@ -24,7 +25,7 @@ namespace Demo
     
     private static readonly Random random = new Random();
     private static string playerId;
-    private static EntityId planetId;
+    private static EntityId assignedPlanetId;
     private static string planetName;
     
     private static readonly EntityId[] PlanetAuthorityMarkersEntityIds =
@@ -118,7 +119,7 @@ namespace Demo
               Thread.CurrentThread.IsBackground = true;
             
               // Finding a planet for the client
-              while(!planetId.IsValid())
+              while(!assignedPlanetId.IsValid())
               {
                 displayProgressBar("Assigning you a planet... ", 10);
 
@@ -132,84 +133,240 @@ namespace Demo
               
               // Start user interaction loop
               Console.ForegroundColor = ConsoleColor.DarkRed;
-              Console.WriteLine("Please enter your command:");
-              Console.WriteLine("==========================");
+              Console.WriteLine("Available commands:");
+              Console.WriteLine();
               Console.ResetColor();
-              Console.WriteLine(" 1. Improve mine");
-              Console.WriteLine(" 2. Build mineral deposit");
-              Console.WriteLine(" 3. Build probe");
-              Console.WriteLine(" 4. Build hangar");
-              Console.WriteLine(" 5. Improve nanobots");
-              Console.WriteLine(" q. Quit");
+              
+              Console.Write("\ti, improve <improv>");
+              Console.ForegroundColor = ConsoleColor.DarkYellow;
+              Console.WriteLine("\t\timprove the planet's facilities");
+              Console.ResetColor();
+              
+              Console.Write("\tb, build <ship>");
+              Console.ForegroundColor = ConsoleColor.DarkYellow;
+              Console.WriteLine("\t\t\tbuild a ship or other implements");
+              Console.ResetColor();
+              
+              Console.Write("\tr, research <research>");
+              Console.ForegroundColor = ConsoleColor.DarkYellow;
+              Console.WriteLine("\t\timprove the planet's technology");
+              Console.ResetColor();
+              
+              Console.Write("\ts, scan <planetId>");
+              Console.ForegroundColor = ConsoleColor.DarkYellow;
+              Console.WriteLine("\t\tscan a planet (leave planetId empty to scan your planet, uses 1 probe)");
+              Console.ResetColor();
+              
+              Console.Write("\tq, quit");
+              Console.ForegroundColor = ConsoleColor.DarkYellow;
+              Console.WriteLine("\t\t\t\texit the game");
+              Console.ResetColor();
+              
               Console.WriteLine();
-              Console.WriteLine(" Leave empty to check planet status");
-              Console.WriteLine();
-
               Console.ForegroundColor = ConsoleColor.DarkRed;
               Console.Write("Command: ");
               Console.ResetColor();
 
-              string s = Console.ReadLine();
+              string input = Console.ReadLine().Trim();
+              
+              Dictionary<string, Improvement>  stringToImprovements = new Dictionary<string, Improvement>();
+              stringToImprovements.Add("mine", Improvement.MINE);
+              stringToImprovements.Add("m", Improvement.MINE);
+              stringToImprovements.Add("deposit", Improvement.DEPOSIT);
+              stringToImprovements.Add("d", Improvement.DEPOSIT);
+              stringToImprovements.Add("hangar", Improvement.HANGAR);
+              stringToImprovements.Add("h", Improvement.HANGAR);
+              
+              Dictionary<string, Improvement>  stringToShips = new Dictionary<string, Improvement>();
+              stringToShips.Add("probe", Improvement.PROBE);
+              stringToShips.Add("p", Improvement.PROBE);
+              
+              Dictionary<string, Improvement>  stringToResearch = new Dictionary<string, Improvement>();
+              stringToResearch.Add("nanobots", Improvement.NANOBOTS);
+              stringToResearch.Add("n", Improvement.NANOBOTS);
+              
+              string[] command = input.Split(' ');
               
               Console.WriteLine();
               
-              if(s == "")
+              switch(command[0])
               {
-                displayProgressBar("Checking planet status... ", 10);
-                PlanetInfoResponder.Commands.PlanetInfo.Request planetInfo =
-                  new PlanetInfoResponder.Commands.PlanetInfo.Request(new PlanetInfoRequest(planetId));
-                connection.SendCommandRequest(planetId, planetInfo, CommandRequestTimeoutMS, null);
-              }
-              else if(s == "1")
-              {
-                displayProgressBar("Improving mine... ", 10);
-                PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
-                  new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.MINE));
-                
-                connection.SendCommandRequest(planetId, planetImprovement, CommandRequestTimeoutMS, null);
-              }
-              else if(s == "2")
-              {
-                displayProgressBar("Improving mineral deposit... ", 10);
-                PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
-                new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.DEPOSIT));
-                connection.SendCommandRequest(planetId, planetImprovement, CommandRequestTimeoutMS, null);
-              }
-              else if(s == "3")
-              {
-                displayProgressBar("Making a probe level... ", 10);
-                PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
-                new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.PROBE));
-                connection.SendCommandRequest(planetId, planetImprovement, CommandRequestTimeoutMS, null);
-              }
-              else if(s == "4")
-              {
-                displayProgressBar("Improving hangar... ", 10);
-                PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
-                new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.HANGAR));
-                connection.SendCommandRequest(planetId, planetImprovement, CommandRequestTimeoutMS, null);
-              }
-              else if(s == "5")
-              {
-                displayProgressBar("Improving nanobots... ", 10);
-                PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
-                new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.NANOBOTS));
-                connection.SendCommandRequest(planetId, planetImprovement, CommandRequestTimeoutMS, null);
-              }
-              else if(s == "q")
-              {
-                displayProgressBar("Quitting... ", 10);
-                isConnected = false;
-              }
-              else
-              {
-                displayProgressBar("Checking... ", 10);
-                Console.Write("No idea about that command, sorry.");
-              }
+                case "i":
+                case "improve":
+                  if(command.Length == 2 && stringToImprovements.ContainsKey(command[1]))
+                  {
+                    displayProgressBar($"Improving '{stringToImprovements[command[1]]}'...", 10);
+                    Console.ForegroundColor = ConsoleColor.DarkRed;
+                    Console.Write("Command sent: ");
+                    Console.WriteLine(input);
+                    Console.ResetColor();
+                    Console.WriteLine();
+                    PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
+                      new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(assignedPlanetId, stringToImprovements[command[1]]));
+                    connection.SendCommandRequest(assignedPlanetId, planetImprovement, CommandRequestTimeoutMS, null);
+                  }
+                  else
+                  {
+                    displayProgressBar("Checking... ", 10);
+                    Console.ForegroundColor = ConsoleColor.DarkRed;
+                    Console.Write("Command sent: ");
+                    Console.ResetColor();
+                    Console.WriteLine(input);
+                    Console.WriteLine();
+                    
+                    Console.ForegroundColor = ConsoleColor.DarkGreen;
+                    Console.Write("Command usage: ");
+                    Console.ResetColor();
+                    Console.Write("i, improve <improv>");
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Console.WriteLine("\timprove the planet's facilities");
+                    Console.ResetColor();
+                    
+                    Console.WriteLine();
 
-              System.Threading.Thread.Sleep(1000);
-            }
-          }).Start();
+                    Console.Write("\tm, mine");
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Console.WriteLine("\t\t\t\tmakes more minerals");
+                    Console.ResetColor();
+                    
+                    Console.Write("\td, deposit");
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Console.WriteLine("\t\t\tstore more minerals");
+                    Console.ResetColor();
+
+                    Console.Write("\th, hangar");
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Console.WriteLine("\t\t\tstore more ships");
+                    Console.ResetColor();
+                  }
+                  break;
+                case "b":
+                case "build":
+                  if(command.Length == 2 && stringToShips.ContainsKey(command[1]))
+                  {
+                    displayProgressBar($"Building a '{stringToShips[command[1]]}'", 10);
+                    Console.ForegroundColor = ConsoleColor.DarkRed;
+                    Console.Write("Command sent: ");
+                    Console.ResetColor();
+                    Console.WriteLine(input);
+                    Console.WriteLine();
+                    PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
+                      new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(assignedPlanetId, stringToShips[command[1]]));
+                    connection.SendCommandRequest(assignedPlanetId, planetImprovement, CommandRequestTimeoutMS, null);
+                  }
+                  else
+                  {
+                    displayProgressBar("Checking... ", 10);
+                    Console.ForegroundColor = ConsoleColor.DarkRed;
+                    Console.Write("Command sent: ");
+                    Console.ResetColor();
+                    Console.WriteLine(input);
+                    Console.WriteLine();
+                    Console.ForegroundColor = ConsoleColor.DarkGreen;
+                    Console.Write("Command usage: ");
+                    Console.ResetColor();
+                    Console.Write("b, build <ship>");
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Console.WriteLine("\t\tbuild a ship or other implements");
+                    Console.ResetColor();
+                    
+                    Console.WriteLine();
+
+                    Console.Write("\tp, probe");
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Console.WriteLine("\t\t\tcan be used to scan other planets");
+                    Console.ResetColor();
+                  }
+                  break;
+                  case "r":
+                  case "research":
+                    if(command.Length == 2 && stringToResearch.ContainsKey(command[1]))
+                    {
+                      displayProgressBar($"Researching '{stringToResearch[command[1]]}'", 10);
+                      Console.ForegroundColor = ConsoleColor.DarkRed;
+                      Console.Write("Command sent: ");
+                      Console.ResetColor();
+                      Console.WriteLine(input);
+                      Console.WriteLine();
+                      PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
+                        new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(assignedPlanetId, stringToResearch[command[1]]));
+                      connection.SendCommandRequest(assignedPlanetId, planetImprovement, CommandRequestTimeoutMS, null);
+                    }
+                    else
+                    {
+                      displayProgressBar("Checking... ", 10);
+                      Console.ForegroundColor = ConsoleColor.DarkRed;
+                      Console.Write("Command sent: ");
+                      Console.ResetColor();
+                      Console.WriteLine(input);
+                      Console.WriteLine();
+
+                      Console.ForegroundColor = ConsoleColor.DarkGreen;
+                      Console.Write("Command Usage: ");
+                      Console.ResetColor();
+                      Console.Write("r, research <res>");
+                      Console.ForegroundColor = ConsoleColor.DarkYellow;
+                      Console.WriteLine("\timprove the planet's technology");
+                      Console.ResetColor();
+                      
+                      Console.WriteLine();
+
+                      Console.Write("\tn, nanobots");
+                      Console.ForegroundColor = ConsoleColor.DarkYellow;
+                      Console.WriteLine("\t\t\tbuild everything faster");
+                      Console.ResetColor();
+                    }
+                    break;
+                case "s":
+                case "scan":
+                case "":
+                  long i = assignedPlanetId.Id;
+                  if (command.Length == 2 && !Int64.TryParse(command[1], out i))
+                  {
+                    Console.Write($"Cannot scan Planet with EntityId: '{command[1]}', sorry.");
+                    break;
+                  }
+                  EntityId planetToScan = new EntityId(i);
+
+                  displayProgressBar("Checking planet status... ", 10);
+                  Console.ForegroundColor = ConsoleColor.DarkRed;
+                  Console.Write("Command sent: ");
+                  Console.ResetColor();
+                  Console.WriteLine(input);
+                  Console.WriteLine();
+
+                  // TODO NEED TO USE PROBE AND LIMIT INFORMATION FOR FOREIGN PLANETS
+
+                  PlanetInfoResponder.Commands.PlanetInfo.Request planetInfo =
+                    new PlanetInfoResponder.Commands.PlanetInfo.Request(new PlanetInfoRequest(planetToScan));
+                  connection.SendCommandRequest(planetToScan, planetInfo, CommandRequestTimeoutMS, null);
+                  break;
+                case "q":
+                case "quit":
+                  displayProgressBar("Quitting... ", 10);
+                  Console.ForegroundColor = ConsoleColor.DarkRed;
+                  Console.Write("Command sent: ");
+                  Console.ResetColor();
+                  Console.WriteLine(input);
+                  Console.WriteLine();
+                  isConnected = false;
+                  break;
+                default:
+                  displayProgressBar("Checking... ", 10);
+                  Console.ForegroundColor = ConsoleColor.DarkRed;
+                  Console.Write("Command sent: ");
+                  Console.ResetColor();
+                  Console.WriteLine(input);
+                  Console.WriteLine();
+                  Console.ForegroundColor = ConsoleColor.DarkRed;
+                  Console.WriteLine("No idea about that command, sorry.");
+                  Console.ResetColor();
+                  break;
+                }
+                Console.WriteLine();
+                System.Threading.Thread.Sleep(1500);
+              }
+            }).Start();
           
           // Main loop to read from SpatialOS
           while (isConnected)
@@ -326,10 +483,10 @@ namespace Demo
       }
       else
       {
-        planetId = response.Response.Value.Get().Value.planetId;
+        assignedPlanetId = response.Response.Value.Get().Value.planetId;
         planetName = response.Response.Value.Get().Value.planetName;
 
-        var logMessage = String.Format("Assigned Planet '{0}' (EntityId {1}) to this client", planetName, planetId.Id);
+        var logMessage = String.Format("Assigned Planet '{0}' (EntityId {1}) to this client", planetName, assignedPlanetId.Id);
       
         Console.ForegroundColor = ConsoleColor.DarkGreen;
         Console.WriteLine(logMessage);
@@ -366,7 +523,7 @@ namespace Demo
       else
       {
         Console.ForegroundColor = ConsoleColor.DarkGreen;
-        var logMessage = String.Format("Planet {0}:", response.Response.Value.Get().Value.name);
+        var logMessage = String.Format("Planet '{0}':", response.Response.Value.Get().Value.name);
         Console.WriteLine(logMessage);
         
         Console.ForegroundColor = ConsoleColor.DarkBlue;
