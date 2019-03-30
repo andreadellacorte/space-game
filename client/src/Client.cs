@@ -296,7 +296,7 @@ namespace Demo
                 case "improve":
                   if(command.Length == 2 && stringToImprovements.ContainsKey(command[1]))
                   {
-                    displayProgressBar($"Improving '{stringToImprovements[command[1]]}'...", 10, input);
+                    displayProgressBar($"Improving '{stringToImprovements[command[1]]}'... ", 10, input);
                     PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
                       new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(AssignedPlanetId, stringToImprovements[command[1]]));
                     connection.SendCommandRequest(AssignedPlanetId, planetImprovement, CommandRequestTimeoutMS, null);
