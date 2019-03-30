@@ -23,10 +23,12 @@ namespace Demo
     private const uint GetOpListTimeoutInMilliseconds = 0;
     private const uint CommandRequestTimeoutMS = 0;
     
-    private static readonly Random random = new Random();
-    private static string playerId;
-    private static EntityId assignedPlanetId;
-    private static string planetName;
+    private static readonly Random Random = new Random();
+    private static string PlayerId;
+    private static string Password;
+
+    private static EntityId AssignedPlanetId;
+    private static string PlanetName;
     
     private static readonly EntityId[] PlanetAuthorityMarkersEntityIds =
     {
@@ -117,18 +119,104 @@ namespace Demo
             while (isConnected)
             {
               Thread.CurrentThread.IsBackground = true;
-            
+              
+              string input;
+              string[] command;
+
               // Finding a planet for the client
-              while(!assignedPlanetId.IsValid())
+              while(!AssignedPlanetId.IsValid())
               {
-                displayProgressBar("Assigning you a planet... ", 10);
-
-                AssignPlanetResponder.Commands.AssignPlanet.Request assignPlanet =
-                  new AssignPlanetResponder.Commands.AssignPlanet.Request(new AssignPlanetRequest(playerId));
-
-                connection.SendCommandRequest(PlanetAuthorityMarkersEntityIds[random.Next(PlanetAuthorityMarkersEntityIds.Length)], assignPlanet, 1500, null);
+                Console.ForegroundColor = ConsoleColor.DarkRed;
+                Console.WriteLine("Choose one:");
+                Console.WriteLine();
+                Console.ResetColor();
                 
-                System.Threading.Thread.Sleep(1600);
+                Console.Write("\tl, login <planetId> <password>");
+                Console.ForegroundColor = ConsoleColor.DarkYellow;
+                Console.WriteLine("\t\tget an existing planet (leave empty for a new planet)");
+                Console.ResetColor();
+                
+                Console.Write("\tq, quit");
+                Console.ForegroundColor = ConsoleColor.DarkYellow;
+                Console.WriteLine("\t\t\t\texit the game");
+                Console.ResetColor();
+
+                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.DarkRed;
+                Console.Write("Command: ");
+                Console.ResetColor();
+
+                input = Console.ReadLine().Trim();
+                command = input.Split(' ');
+
+                Console.WriteLine();
+                
+                switch(command[0])
+                {
+                  case "l":
+                  case "login":
+                  case "":
+                    long i = 0;
+                    string inputPassword = "";
+                    EntityId planetId = new EntityId(0);
+                    
+                    if(command.Length == 3 && Int64.TryParse(command[1], out i))
+                    {
+                      planetId = new EntityId(i);
+                      inputPassword = command[2];
+
+                      displayProgressBar($"Logging in as planet '{i}'... ", 10);
+                      Console.ForegroundColor = ConsoleColor.DarkRed;
+                      Console.Write("Command sent: ");
+                      Console.ResetColor();
+                      Console.WriteLine(input);
+                      Console.WriteLine();
+                      AssignPlanetResponder.Commands.AssignPlanet.Request assignPlanet =
+                        new AssignPlanetResponder.Commands.AssignPlanet.Request(new AssignPlanetRequest(PlayerId, planetId, inputPassword));
+                        
+                      foreach (var authorityMarkerEntityId in PlanetAuthorityMarkersEntityIds)
+                      {
+                          connection.SendCommandRequest(authorityMarkerEntityId, assignPlanet, 1500, null);
+                      }
+                    }
+                    else if(command.Length == 1)
+                    {
+                      displayProgressBar("Assigning you a new planet... ", 10);
+                      Console.ForegroundColor = ConsoleColor.DarkRed;
+                      Console.Write("Command sent: ");
+                      Console.ResetColor();
+                      Console.WriteLine(input);
+                      Console.WriteLine();
+
+                      AssignPlanetResponder.Commands.AssignPlanet.Request assignPlanet =
+                        new AssignPlanetResponder.Commands.AssignPlanet.Request(new AssignPlanetRequest(PlayerId, planetId, inputPassword));
+                      
+                      connection.SendCommandRequest(PlanetAuthorityMarkersEntityIds[Random.Next(PlanetAuthorityMarkersEntityIds.Length)], assignPlanet, 1500, null);
+                    }
+                    else
+                    {
+                      // TODO USAGE HERE
+                      break;
+                    }
+
+                    System.Threading.Thread.Sleep(1600);
+
+                    break;
+                  case "q":
+                  case "quit":
+                    displayProgressBar("Quitting... ", 10);
+                    Console.ForegroundColor = ConsoleColor.DarkRed;
+                    Console.Write("Command sent: ");
+                    Console.ResetColor();
+                    Console.WriteLine(input);
+                    Console.WriteLine();
+                    isConnected = false;
+
+                    break;
+                  default:
+                    Console.WriteLine("Incorrect command");
+                    break;
+                }
               }
               
               // Start user interaction loop
@@ -167,7 +255,7 @@ namespace Demo
               Console.Write("Command: ");
               Console.ResetColor();
 
-              string input = Console.ReadLine().Trim();
+              input = Console.ReadLine().Trim();
               
               Dictionary<string, Improvement>  stringToImprovements = new Dictionary<string, Improvement>();
               stringToImprovements.Add("mine", Improvement.MINE);
@@ -185,7 +273,7 @@ namespace Demo
               stringToResearch.Add("nanobots", Improvement.NANOBOTS);
               stringToResearch.Add("n", Improvement.NANOBOTS);
               
-              string[] command = input.Split(' ');
+              command = input.Split(' ');
               
               Console.WriteLine();
               
@@ -202,8 +290,8 @@ namespace Demo
                     Console.ResetColor();
                     Console.WriteLine();
                     PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
-                      new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(assignedPlanetId, stringToImprovements[command[1]]));
-                    connection.SendCommandRequest(assignedPlanetId, planetImprovement, CommandRequestTimeoutMS, null);
+                      new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(AssignedPlanetId, stringToImprovements[command[1]]));
+                    connection.SendCommandRequest(AssignedPlanetId, planetImprovement, CommandRequestTimeoutMS, null);
                   }
                   else
                   {
@@ -251,8 +339,8 @@ namespace Demo
                     Console.WriteLine(input);
                     Console.WriteLine();
                     PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
-                      new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(assignedPlanetId, stringToShips[command[1]]));
-                    connection.SendCommandRequest(assignedPlanetId, planetImprovement, CommandRequestTimeoutMS, null);
+                      new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(AssignedPlanetId, stringToShips[command[1]]));
+                    connection.SendCommandRequest(AssignedPlanetId, planetImprovement, CommandRequestTimeoutMS, null);
                   }
                   else
                   {
@@ -289,8 +377,8 @@ namespace Demo
                       Console.WriteLine(input);
                       Console.WriteLine();
                       PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
-                        new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(assignedPlanetId, stringToResearch[command[1]]));
-                      connection.SendCommandRequest(assignedPlanetId, planetImprovement, CommandRequestTimeoutMS, null);
+                        new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(AssignedPlanetId, stringToResearch[command[1]]));
+                      connection.SendCommandRequest(AssignedPlanetId, planetImprovement, CommandRequestTimeoutMS, null);
                     }
                     else
                     {
@@ -320,7 +408,7 @@ namespace Demo
                 case "s":
                 case "scan":
                 case "":
-                  long i = assignedPlanetId.Id;
+                  long i = AssignedPlanetId.Id;
                   if (command.Length == 2 && !Int64.TryParse(command[1], out i))
                   {
                     Console.Write($"Cannot scan Planet with EntityId: '{command[1]}', sorry.");
@@ -349,7 +437,22 @@ namespace Demo
                   Console.ResetColor();
                   Console.WriteLine(input);
                   Console.WriteLine();
+
+                  Console.Write("PlanetId: ");
+                  Console.ResetColor();
+                  Console.WriteLine(AssignedPlanetId.Id);
+                  Console.ResetColor();
+                  Console.WriteLine();
+
+                  Console.Write("Password is: ");
+                  Console.BackgroundColor = ConsoleColor.DarkRed;
+                  Console.ForegroundColor = ConsoleColor.DarkRed;
+                  Console.WriteLine(Password);
+                  Console.ResetColor();
+                  Console.WriteLine("");
+                  
                   isConnected = false;
+
                   break;
                 default:
                   displayProgressBar("Checking... ", 10);
@@ -393,7 +496,7 @@ namespace Demo
 
     private static Connection ConnectClient(string[] arguments)
     {
-      playerId = arguments[0];
+      PlayerId = arguments[0];
       if(arguments.Length == 3)
       {
         string hostname = arguments[1];
@@ -402,7 +505,7 @@ namespace Demo
         connectionParameters.WorkerType = WorkerType;
         connectionParameters.Network.ConnectionType = NetworkConnectionType.Tcp;
 
-        using (var future = Connection.ConnectAsync(hostname, port, playerId, connectionParameters))
+        using (var future = Connection.ConnectAsync(hostname, port, PlayerId, connectionParameters))
         {
           return future.Get();
         }
@@ -416,7 +519,7 @@ namespace Demo
           new PlayerIdentityTokenRequest
           {
               DevelopmentAuthenticationTokenId = DAT_TokenSecret,
-              PlayerId = playerId,
+              PlayerId = PlayerId,
               DisplayName = "Andrea",
               Metadata = ""
           });
@@ -483,16 +586,44 @@ namespace Demo
       }
       else
       {
-        assignedPlanetId = response.Response.Value.Get().Value.planetId;
-        planetName = response.Response.Value.Get().Value.planetName;
+        string logMessage;
+        
+        if(response.Response.Value.Get().Value.planetId.Id == 0)
+        {
+          logMessage = response.Response.Value.Get().Value.logMessage;
 
-        var logMessage = String.Format("Assigned Planet '{0}' (EntityId {1}) to this client", planetName, assignedPlanetId.Id);
-      
-        Console.ForegroundColor = ConsoleColor.DarkGreen;
-        Console.WriteLine(logMessage);
-        Console.ResetColor();
-        Console.WriteLine();
-        connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+          Console.ForegroundColor = ConsoleColor.DarkRed;
+          Console.WriteLine(logMessage);
+          Console.ResetColor();
+          Console.WriteLine();
+          connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+        }
+        if(response.Response.Value.Get().Value.planetId.Id == -1)
+        {
+          // Do nothing, not authoritative
+        }
+        else
+        {
+          AssignedPlanetId = response.Response.Value.Get().Value.planetId;
+          PlanetName = response.Response.Value.Get().Value.planetName;
+          Password = response.Response.Value.Get().Value.password;
+          
+          logMessage = String.Format("Assigned Planet '{0}' (EntityId {1}) to this client", PlanetName, AssignedPlanetId.Id);
+        
+          Console.ForegroundColor = ConsoleColor.DarkGreen;
+          Console.WriteLine(logMessage);
+          Console.ResetColor();
+          Console.WriteLine();
+          
+          Console.Write("Password is: ");
+          Console.BackgroundColor = ConsoleColor.DarkRed;
+          Console.ForegroundColor = ConsoleColor.DarkRed;
+          Console.WriteLine(Password);
+          Console.ResetColor();
+          Console.WriteLine();
+          
+          connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+        }
       }
     }
     
