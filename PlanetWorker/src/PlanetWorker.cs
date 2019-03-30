@@ -362,7 +362,7 @@ namespace Demo
       
       if(planetId.Id == 0)
       {
-        logMessage = String.Format("No planets available for player {0}", request.Request.Get().Value.playerId);
+        logMessage = String.Format("HandleAssignPlanetRequest failed for {0}", request.Request.Get().Value.playerId);
         connection.SendLogMessage(LogLevel.Error, LoggerName, logMessage);
       }
     }
