@@ -1,6 +1,7 @@
 // Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
@@ -17,11 +18,14 @@ namespace Demo
 {
   class SnapshotGenerator
   {
+    private const int WorldDimension = 2000;
+    private const int AuthorityMarketSpacing = 200;
+    private static readonly int[] WorkerLocations = Enumerable.Range(-WorldDimension / (2 * AuthorityMarketSpacing), WorldDimension / AuthorityMarketSpacing).Select(x => x * AuthorityMarketSpacing).ToArray();
+
     private const int ErrorExitStatus = 1;
     private const string LoggerName = "SnapshotGenerator.cs";
+
     private static readonly string[] WorkerLayers = {"planets"};
-    private static readonly int[] WorkerLocations = {-250, 250};
-    private static readonly int[] PlanetLocations = {-400, -350, -300, -250, -200, -150, -100, -50, 50, 100, 150, 200, 250, 300, 350, 400};
     private static readonly Random random = new Random();
     
     static int Main(string[] arguments)
@@ -38,6 +42,8 @@ namespace Demo
         printUsage();
         return ErrorExitStatus;
       }
+      
+      Console.WriteLine(WorkerLocations);
 
       GenerateSnapshot(arguments[0], WorkerLayers, WorkerLocations);
       
@@ -102,7 +108,7 @@ namespace Demo
       
       string random_password = random.Next().ToString("X");
 
-      int random_minerals = random.Next(5000);
+      int random_minerals = 100;
       
       // Defines worker attribute requirements for workers that can read a component.
       // workers with an attribute of "client" OR workerType will have read access
