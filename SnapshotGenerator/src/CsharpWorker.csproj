@@ -20,10 +20,16 @@
     <Reference Include="Improbable.WorkerSdkCsharp, Version=13.5.1.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>..\lib\improbable\sdk\13.5.1\csharp\Improbable.WorkerSdkCsharp.dll</HintPath>
     </Reference>
+    <Reference Include="MarvellousMarkovModels, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>packages\MarvellousMarkovModels.1.0.0.0\lib\net45\MarvellousMarkovModels.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml" />
     <Compile Include="SnapshotGenerator.cs" />
+    <Compile Include="StarName.cs" />
+    <Compile Include="RandomExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\lib\improbable\sdk\13.5.1\linux64\libCoreSdkDll.so">
@@ -45,6 +51,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include=".\improbable\generated\**\*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

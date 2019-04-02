@@ -177,6 +177,7 @@ namespace Demo
               if(planetInfoData.playerId == "")
               {
                 var planetId = pair.Key;
+                var planetName = planetInfoData.name;
                 var playerId = request.Request.Get().Value.playerId;
                 
                 //Create new component update object
@@ -187,7 +188,7 @@ namespace Demo
                 connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
                 
                 // Send the assigned planet to the client
-                var assignPlanetResponse = new AssignPlanetResponse(planetId);
+                var assignPlanetResponse = new AssignPlanetResponse(planetId, planetName);
                 var commandResponse = new AssignPlanetResponder.Commands.AssignPlanet.Response(assignPlanetResponse);
                 connection.SendCommandResponse(request.RequestId, commandResponse);
                 
