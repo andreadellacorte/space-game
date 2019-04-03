@@ -2,6 +2,16 @@
 
 # This script defines various paths and methods to be used when building the project
 
+pushd () {
+    command pushd "$@" > /dev/null
+}
+
+popd () {
+    command popd "$@" > /dev/null
+}
+
+export popd pushd
+
 set -e -u
 
 pushd "$( dirname "${BASH_SOURCE[0]}" )"

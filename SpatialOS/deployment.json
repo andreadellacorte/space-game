@@ -9,7 +9,7 @@
       {
         "layer": "planets",
         "hexGrid": {
-          "numWorkers": 2
+          "numWorkers": 4
         }
       }
     ]

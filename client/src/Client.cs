@@ -17,13 +17,13 @@ namespace Demo
     private const string WorkerType = "InteractiveClient";
     private const string LoggerName = "Client.cs";
     private const int ErrorExitStatus = 1;
-    private const uint GetOpListTimeoutInMilliseconds = 100;
-    private const uint CommandRequestTimeoutMS = 100;
-    private const int pingIntervalMs = 5000;
+    private const uint GetOpListTimeoutInMilliseconds = 0;
+    private const uint CommandRequestTimeoutMS = 0;
     
     private static readonly Random random = new Random();
     private static string playerId;
     private static EntityId planetId;
+    private static string planetName;
     
     private static readonly EntityId[] PlanetAuthorityMarkersEntityIds =
     {
@@ -49,13 +49,22 @@ namespace Demo
         printUsage();
         return ErrorExitStatus;
       }
+      
+      Console.Clear();
 
-      Console.WriteLine("Client Starting...");
+      Console.ForegroundColor = ConsoleColor.White;
+      Console.BackgroundColor = ConsoleColor.DarkBlue;
+      Console.WriteLine("Welcome to space-game!");
+      Console.WriteLine("======================");
+      Console.WriteLine();
+      Console.ResetColor();
+
       using (var connection = ConnectClient(arguments))
       {
         using (var dispatcher = new Dispatcher())
         {
           var isConnected = true;
+          
 
           dispatcher.OnDisconnect(op =>
           {
@@ -81,16 +90,21 @@ namespace Demo
           
           dispatcher.OnCommandResponse<AssignPlanetResponder.Commands.AssignPlanet>(response =>
           {
-              HandleAssignPlanet(response, connection);
+              HandleAssignPlanetResponse(response, connection);
+          });
+          
+          dispatcher.OnCommandResponse<PlanetInfoResponder.Commands.PlanetInfo>(response =>
+          {
+              HandlePlanetInfoResponse(response, connection);
+          });
+          
+          dispatcher.OnCommandResponse<PlanetImprovementResponder.Commands.PlanetImprovement>(response =>
+          {
+              HandlePlanetImprovementResponse(response, connection);
           });
 
           connection.SendLogMessage(LogLevel.Info, LoggerName,
             "Successfully connected using TCP and the Receptionist");
-            
-          AssignPlanetResponder.Commands.AssignPlanet.Request assignPlanet =
-            new AssignPlanetResponder.Commands.AssignPlanet.Request(new AssignPlanetRequest(playerId));
-
-          connection.SendCommandRequest(PlanetAuthorityMarkersEntityIds[random.Next(PlanetAuthorityMarkersEntityIds.Length)], assignPlanet, CommandRequestTimeoutMS, null);
           
           // UX Thread to read from CLI
           new Thread(() =>
@@ -98,18 +112,98 @@ namespace Demo
             while (isConnected)
             {
               Thread.CurrentThread.IsBackground = true;
-              string s = Console.ReadLine();
-              Console.WriteLine("Please enter your command:");
-              Console.WriteLine("1. Build mine");
-              
-              if(s == "1")
+            
+              // Finding a planet for the client
+              while(!planetId.IsValid())
               {
-                Console.WriteLine("PRRR, new mine built.");
+                displayProgressBar("Assigning you a planet... ", 10);
+
+                AssignPlanetResponder.Commands.AssignPlanet.Request assignPlanet =
+                  new AssignPlanetResponder.Commands.AssignPlanet.Request(new AssignPlanetRequest(playerId));
+
+                connection.SendCommandRequest(PlanetAuthorityMarkersEntityIds[random.Next(PlanetAuthorityMarkersEntityIds.Length)], assignPlanet, 1500, null);
+                
+                System.Threading.Thread.Sleep(1600);
+              }
+              
+              // Start user interaction loop
+              Console.ForegroundColor = ConsoleColor.DarkRed;
+              Console.WriteLine("Please enter your command:");
+              Console.WriteLine("==========================");
+              Console.ResetColor();
+              Console.WriteLine(" 1. Improve mine");
+              Console.WriteLine(" 2. Build mineral deposit");
+              Console.WriteLine(" 3. Build probe");
+              Console.WriteLine(" 4. Build hangar");
+              Console.WriteLine(" 5. Improve nanobots");
+              Console.WriteLine(" q. Quit");
+              Console.WriteLine();
+              Console.WriteLine(" Leave empty to check planet status");
+              Console.WriteLine();
+
+              Console.ForegroundColor = ConsoleColor.DarkRed;
+              Console.Write("Command: ");
+              Console.ResetColor();
+
+              string s = Console.ReadLine();
+              
+              Console.WriteLine();
+              
+              if(s == "")
+              {
+                displayProgressBar("Checking planet status... ", 10);
+                PlanetInfoResponder.Commands.PlanetInfo.Request planetInfo =
+                  new PlanetInfoResponder.Commands.PlanetInfo.Request(new PlanetInfoRequest(planetId));
+                connection.SendCommandRequest(planetId, planetInfo, CommandRequestTimeoutMS, null);
+              }
+              else if(s == "1")
+              {
+                displayProgressBar("Improving mine... ", 10);
+                PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
+                  new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.MINE));
+                
+                connection.SendCommandRequest(planetId, planetImprovement, CommandRequestTimeoutMS, null);
+              }
+              else if(s == "2")
+              {
+                displayProgressBar("Improving mineral deposit... ", 10);
+                PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
+                new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.DEPOSIT));
+                connection.SendCommandRequest(planetId, planetImprovement, CommandRequestTimeoutMS, null);
+              }
+              else if(s == "3")
+              {
+                displayProgressBar("Making a probe level... ", 10);
+                PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
+                new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.PROBE));
+                connection.SendCommandRequest(planetId, planetImprovement, CommandRequestTimeoutMS, null);
+              }
+              else if(s == "4")
+              {
+                displayProgressBar("Improving hangar... ", 10);
+                PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
+                new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.HANGAR));
+                connection.SendCommandRequest(planetId, planetImprovement, CommandRequestTimeoutMS, null);
+              }
+              else if(s == "5")
+              {
+                displayProgressBar("Improving nanobots... ", 10);
+                PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
+                new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(planetId, Improvement.NANOBOTS));
+                connection.SendCommandRequest(planetId, planetImprovement, CommandRequestTimeoutMS, null);
+              }
+              else if(s == "q")
+              {
+                displayProgressBar("Quitting... ", 10);
+                isConnected = false;
               }
               else
               {
-                Console.WriteLine("No idea about that command, sorry.");
+                displayProgressBar("Checking... ", 10);
+                Console.Write("No idea about that command, sorry.");
               }
+
+              System.Threading.Thread.Sleep(1000);
             }
           }).Start();
           
@@ -123,6 +217,17 @@ namespace Demo
       }
 
       return 0;
+    }
+    
+    private static void displayProgressBar(string waitMessage, int waitLength)
+    {
+      Console.Write(waitMessage);
+      using (var progress = new ProgressBar()) {
+        for (int i = 0; i <= 100; i++) {
+          progress.Report((double) i / 100);
+          Thread.Sleep(waitLength);
+        }
+      }
     }
 
     private static Connection ConnectClient(string[] arguments)
@@ -140,7 +245,7 @@ namespace Demo
       }
     }
     
-    private static void HandleAssignPlanet(CommandResponseOp<AssignPlanetResponder.Commands.AssignPlanet> response, Connection connection)
+    private static void HandleAssignPlanetResponse(CommandResponseOp<AssignPlanetResponder.Commands.AssignPlanet> response, Connection connection)
     {
       if (response.StatusCode != StatusCode.Success)
       {
@@ -167,10 +272,113 @@ namespace Demo
       else
       {
         planetId = response.Response.Value.Get().Value.planetId;
-        var logMessage = String.Format("Assigned Planet with EntityId {0} to this client", planetId.Id);
+        planetName = response.Response.Value.Get().Value.planetName;
+
+        var logMessage = String.Format("Assigned Planet '{0}' (EntityId {1}) to this client", planetName, planetId.Id);
       
+        Console.ForegroundColor = ConsoleColor.DarkGreen;
         Console.WriteLine(logMessage);
+        Console.ResetColor();
+        Console.WriteLine();
         connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+      }
+    }
+    
+    private static void HandlePlanetInfoResponse(CommandResponseOp<PlanetInfoResponder.Commands.PlanetInfo> response, Connection connection)
+    {
+      if (response.StatusCode != StatusCode.Success)
+      {
+        StringBuilder logMessageBuilder = new StringBuilder();
+        logMessageBuilder.Append(
+            String.Format("Received invalid OnCommandResponse for request ID {0} with status code {1} to entity with ID {2}.", response.RequestId, response.StatusCode, response.EntityId));
+        if (!string.IsNullOrEmpty(response.Message))
+        {
+            logMessageBuilder.Append(String.Format("The message was \'{0}\'.", response.Message));
+        }
+
+        if (!response.Response.HasValue)
+        {
+            logMessageBuilder.Append("The response was missing.");
+        }
+        else
+        {
+            logMessageBuilder.Append(
+                String.Format("The EntityIdResponse ID value was {0}", response.Response.Value.Get().Value));
+        }
+
+        connection.SendLogMessage(LogLevel.Warn, LoggerName, logMessageBuilder.ToString());
+      }
+      else
+      {
+        Console.ForegroundColor = ConsoleColor.DarkGreen;
+        var logMessage = String.Format("Planet {0}:", response.Response.Value.Get().Value.name);
+        Console.WriteLine(logMessage);
+        
+        Console.ForegroundColor = ConsoleColor.DarkBlue;
+        logMessage = String.Format("  / Production: Level {0} mine - Minerals: {1} / {2} max",
+          response.Response.Value.Get().Value.mineLevel,
+          (int) response.Response.Value.Get().Value.minerals,
+          response.Response.Value.Get().Value.depositLevel * 100);
+        Console.WriteLine(logMessage);
+        
+        logMessage = String.Format("  / Spaceships: {0} probes (level {1}) - Total: {2} / {3} max ",
+          response.Response.Value.Get().Value.probes,
+          0,
+          response.Response.Value.Get().Value.probes,
+          response.Response.Value.Get().Value.hangarLevel * 3);
+        Console.WriteLine(logMessage);
+        
+        logMessage = String.Format("  / Storage: Level {0} hangar, Level {1} mineral deposit",
+          response.Response.Value.Get().Value.hangarLevel,
+          response.Response.Value.Get().Value.depositLevel);
+        Console.WriteLine(logMessage);
+        
+        logMessage = String.Format("  / Tech: Level {0} nanobots",
+          response.Response.Value.Get().Value.nanobotLevel);
+        Console.WriteLine(logMessage);
+        
+        logMessage = String.Format("  / Build Queue: {0} - {1} seconds remaining",
+          response.Response.Value.Get().Value.buildQueue,
+          (int) response.Response.Value.Get().Value.buildQueueTime);
+        Console.WriteLine(logMessage);
+        Console.WriteLine();
+        Console.ResetColor();
+
+        connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+      }
+    }
+    
+    private static void HandlePlanetImprovementResponse(CommandResponseOp<PlanetImprovementResponder.Commands.PlanetImprovement> response, Connection connection)
+    {
+      if (response.StatusCode != StatusCode.Success)
+      {
+        StringBuilder logMessageBuilder = new StringBuilder();
+        logMessageBuilder.Append(
+            String.Format("Received invalid OnCommandResponse for request ID {0} with status code {1} to entity with ID {2}.", response.RequestId, response.StatusCode, response.EntityId));
+        if (!string.IsNullOrEmpty(response.Message))
+        {
+            logMessageBuilder.Append(String.Format("The message was \'{0}\'.", response.Message));
+        }
+
+        if (!response.Response.HasValue)
+        {
+            logMessageBuilder.Append("The response was missing.");
+        }
+        else
+        {
+            logMessageBuilder.Append(
+                String.Format("The EntityIdResponse ID value was {0}", response.Response.Value.Get().Value));
+        }
+
+        connection.SendLogMessage(LogLevel.Warn, LoggerName, logMessageBuilder.ToString());
+      }
+      else
+      {
+        Console.ForegroundColor = ConsoleColor.DarkGreen;
+        Console.WriteLine(response.Response.Value.Get().Value.message);
+        Console.WriteLine();
+        Console.ResetColor();
+        connection.SendLogMessage(LogLevel.Info, LoggerName, response.Response.Value.Get().Value.message);
       }
     }
   }
