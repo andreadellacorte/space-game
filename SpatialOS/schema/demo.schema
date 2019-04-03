@@ -1,12 +1,35 @@
 // Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 package demo;
 
+// Improvements
+
+enum Improvement {
+	EMPTY = 0;
+	MINE = 1;
+	PROBE = 2;
+	DEPOSIT = 3;
+	HANGAR = 4;
+	NANOBOTS = 5;
+}
+
+// PlanetInfo
+
 component PlanetInfo {
 	id = 101;
 	string name = 1;
 	string player_id = 2;
-	uint32 minerals = 3;
+	int32 mine_level = 3;
+	double minerals = 4;
+	int32 deposit_level = 5;
+	int32 probes = 6;
+	int32 hangar_level = 7;
+	int32 nanobot_level = 8;
+	Improvement build_queue = 9;
+	double build_queue_time = 10;
+	int32 build_materials = 11;
 }
+
+// AssignPlanetResponder
 
 type AssignPlanetResponse {
 	EntityId planet_id = 1;
@@ -20,4 +43,43 @@ type AssignPlanetRequest {
 component AssignPlanetResponder {
   id = 102;
   command AssignPlanetResponse assign_planet(AssignPlanetRequest);
+}
+
+// PlanetInfoResponder
+
+type PlanetInfoResponse {
+	string name = 1;
+	int32 mine_level = 2;
+	double minerals = 3;
+	int32 deposit_level = 4;
+	int32 probes = 5;
+	int32 hangar_level = 6;
+	int32 nanobot_level = 7;
+	Improvement build_queue = 8;
+	double build_queue_time = 9;
+}
+
+type PlanetInfoRequest {
+	EntityId planet_id = 1;
+}
+
+component PlanetInfoResponder {
+  id = 103;
+  command PlanetInfoResponse planet_info(PlanetInfoRequest);
+}
+
+// PlanetImprovementResponder
+
+type PlanetImprovementResponse {
+	string message = 1;
+}
+
+type PlanetImprovementRequest {
+	EntityId planet_id = 1;
+	Improvement improvement = 2;
+}
+
+component PlanetImprovementResponder {
+  id = 104;
+  command PlanetImprovementResponse planet_improvement(PlanetImprovementRequest);
 }

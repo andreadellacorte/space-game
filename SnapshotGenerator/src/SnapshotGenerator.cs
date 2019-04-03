@@ -91,8 +91,17 @@ namespace Demo
     
     private static Entity createPlanet(int x, int z)
     {
-      var entity = new Entity();
       const string entityType = "Planet";
+      const string empty_player_name = "";
+      const int default_mine_level = 1;
+      const int default_build_queue_time = 0;
+      const int default_build_materials = 0;
+      const int default_deposit_level = 1;
+      const int default_probes = 0;
+      const int default_hangar_level = 1;
+      const int default_nanobots_level = 1;
+      
+      int random_minerals = random.Next(5000);
       
       // Defines worker attribute requirements for workers that can read a component.
       // workers with an attribute of "client" OR workerType will have read access
@@ -114,15 +123,27 @@ namespace Demo
       {
         {EntityAcl.ComponentId, workerWriteRequirementSet},
         {Position.ComponentId, workerWriteRequirementSet},
-        {PlanetInfo.ComponentId, workerWriteRequirementSet}
+        {PlanetInfo.ComponentId, workerWriteRequirementSet},
+        {PlanetInfoResponder.ComponentId, workerWriteRequirementSet},
+        {PlanetImprovementResponder.ComponentId, workerWriteRequirementSet}
       };
       
+      var entity = new Entity();
+
       entity.Add(new EntityAcl.Data(readRequirementSet, writeAcl));
       // Needed for the entity to be persisted in snapshots.
       entity.Add(new Persistence.Data());
       entity.Add(new Metadata.Data(entityType));
       entity.Add(new Position.Data(new Coordinates(x, 0, z)));
-      entity.Add(new PlanetInfo.Data(StarName.Generate(random),"", 0));
+      entity.Add(new PlanetInfo.Data(StarName.Generate(random),
+        empty_player_name,
+        default_mine_level, random_minerals, default_deposit_level,
+        default_probes, default_hangar_level,
+        default_nanobots_level,
+        Improvement.EMPTY, default_build_queue_time, default_build_materials));
+      entity.Add(new PlanetInfoResponder.Data());
+      entity.Add(new PlanetImprovementResponder.Data());
+      
       return entity;
     }
 

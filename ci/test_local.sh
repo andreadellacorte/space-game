@@ -4,7 +4,7 @@ set -u -x
 
 pushd SpatialOS
 
-gtimeout 30s spatial alpha local launch
+gtimeout 30s ./scripts/run_server.sh
 
 status=$?
 

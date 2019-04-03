@@ -15,17 +15,22 @@ namespace Demo
     private const string WorkerType = "PlanetWorker";
     private const string LoggerName = "PlanetWorker.cs";
     private const int ErrorExitStatus = 1;
-    private const uint GetOpListTimeoutInMilliseconds = 100;
+    private const uint GetOpListTimeoutInMilliseconds = 0;
     private const string playerType = "Player";
+    private const double SecondsPerFrame = 0.2;
     
     private class ViewEntity
     {
         public bool hasAuthority;
-        public bool isPlanet;
         public Entity entity;
     }
 
     private static Dictionary<EntityId, ViewEntity> EntityView = new Dictionary<EntityId, ViewEntity>();
+    
+    private static bool isPlanet(Entity entity)
+    {
+      return entity.GetComponentIds().Contains(PlanetInfo.ComponentId);
+    }
 
     static int Main(string[] arguments)
     {
@@ -71,27 +76,27 @@ namespace Demo
           
           dispatcher.OnAuthorityChange<PlanetInfo>(op =>
           {
-            string logMessage;
+            //string logMessage;
 
             ViewEntity entity;
             if (EntityView.TryGetValue(op.EntityId, out entity))
             {
               if(op.Authority == Authority.Authoritative)
               {
-                logMessage = String.Format("Gained authority over entityId {0}", op.EntityId);
-                connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+                //logMessage = String.Format("Gained authority over entityId {0}", op.EntityId);
+                //connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
                 entity.hasAuthority = true;
               }
               else if (op.Authority == Authority.NotAuthoritative)
               {
-                logMessage = String.Format("Lost authority over entityId {0}", op.EntityId);
-                connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+                //logMessage = String.Format("Lost authority over entityId {0}", op.EntityId);
+                //connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
                 entity.hasAuthority = false;
               }
               else if (op.Authority == Authority.AuthorityLossImminent)
               {
-                logMessage = String.Format("Lost authority over entityId {0}", op.EntityId);
-                connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+                //logMessage = String.Format("Lost authority over entityId {0}", op.EntityId);
+                //connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
                 entity.hasAuthority = false;
               }
             }
@@ -99,28 +104,26 @@ namespace Demo
           
           dispatcher.OnAddComponent<PlanetInfo>(op =>
           {
-            var logMessage = String.Format("Adding PlanetInfo Component for entityId {0}", op.EntityId);
-            connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+            //var logMessage = String.Format("Adding PlanetInfo Component for entityId {0}", op.EntityId);
+            //connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
 
             ViewEntity entity;
             if (EntityView.TryGetValue(op.EntityId, out entity))
             {
                 entity.entity.Add<PlanetInfo>(op.Data);
-                entity.isPlanet = true;
             }
             else
             {
                 ViewEntity newEntity = new ViewEntity();
                 EntityView.Add(op.EntityId, newEntity);
                 newEntity.entity.Add<PlanetInfo>(op.Data);
-                newEntity.isPlanet = true;
             }
           });
           
           dispatcher.OnComponentUpdate<PlanetInfo>(op=>
           {
-            var logMessage = String.Format("Updating PlanetInfo Component for entityId {0}", op.EntityId);
-            connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+            //var logMessage = String.Format("Updating PlanetInfo Component for entityId {0}", op.EntityId);
+            //connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
 
             ViewEntity entity;
             if (EntityView.TryGetValue(op.EntityId, out entity))
@@ -132,8 +135,8 @@ namespace Demo
           
           dispatcher.OnAddEntity(op =>
           {
-            var logMessage = String.Format("Adding entityId {0}", op.EntityId);
-            connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+            //var logMessage = String.Format("Adding entityId {0}", op.EntityId);
+            //connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
 
             // AddEntity will always be followed by OnAddComponent
             ViewEntity newEntity = new ViewEntity();
@@ -144,75 +147,113 @@ namespace Demo
           
           dispatcher.OnRemoveEntity(op =>
           {
+            //var logMessage = String.Format("Removing entityId {0}", op.EntityId);
+            //connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
             EntityView.Remove(op.EntityId);
           });
 
           dispatcher.OnCommandRequest<AssignPlanetResponder.Commands.AssignPlanet>(request =>
           {
-            var logMessage = String.Format("Received AssignPlanet command from player {0}", request.Request.Get().Value.playerId);
-            connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
-            
-            var planetAssigned = false;
-              
-            foreach (KeyValuePair<EntityId, ViewEntity> pair in EntityView)
-            {
-              if(!pair.Value.hasAuthority || !pair.Value.isPlanet)
-              {
-                logMessage = String.Format("Skipping entity with entityId {0}", pair.Key);
-                connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
-                continue;
-              }
-              
-              logMessage = String.Format("Picked planet with entityId {0} because I have authority", pair.Key);
-              connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
-              
-              logMessage = String.Format("Entity.PlanetInfo: {0}", pair.Value.entity.Get<PlanetInfo>());
-              connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
-              
-              PlanetInfoData planetInfoData = pair.Value.entity.Get<PlanetInfo>().Value.Get().Value;
-              
-              logMessage = String.Format("Entity {0} has playerId {1}", pair.Key, planetInfoData.playerId);
-              connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
-              
-              if(planetInfoData.playerId == "")
-              {
-                var planetId = pair.Key;
-                var planetName = planetInfoData.name;
-                var playerId = request.Request.Get().Value.playerId;
-                
-                //Create new component update object
-                PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
-                planetInfoUpdate.SetPlayerId(playerId);
-                
-                // Send the updates
-                connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
-                
-                // Send the assigned planet to the client
-                var assignPlanetResponse = new AssignPlanetResponse(planetId, planetName);
-                var commandResponse = new AssignPlanetResponder.Commands.AssignPlanet.Response(assignPlanetResponse);
-                connection.SendCommandResponse(request.RequestId, commandResponse);
-                
-                planetAssigned = true;
-                
-                break;
-              }
-              
-              if(!planetAssigned){
-                logMessage = String.Format("No planets available for player {0}", request.Request.Get().Value.playerId);
-                throw new SystemException(logMessage);
-              }
-            }
+            HandleAssignPlanetRequest(request, connection);
+          });
+          
+          dispatcher.OnCommandRequest<PlanetInfoResponder.Commands.PlanetInfo>(request =>
+          {
+            HandlePlanetInfoRequest(request, connection);
+          });
+          
+          dispatcher.OnCommandRequest<PlanetImprovementResponder.Commands.PlanetImprovement>(request =>
+          {
+            HandlePlanetImprovementRequest(request, connection);
           });
 
           connection.SendLogMessage(LogLevel.Info, LoggerName,
             "Successfully connected using TCP and the Receptionist");
+            
+          var maxWait = System.TimeSpan.FromMilliseconds(1000f * SecondsPerFrame);
+          var stopwatch = new System.Diagnostics.Stopwatch();
 
           while (isConnected)
           {
-            using (var opList = connection.GetOpList(GetOpListTimeoutInMilliseconds))
+            // Setup Timer
+            stopwatch.Reset();
+            stopwatch.Start();
+            
+            var opList = connection.GetOpList(GetOpListTimeoutInMilliseconds);
+            dispatcher.Process(opList);
+            
+            foreach (var pair in EntityView)
             {
-              dispatcher.Process(opList);
+              if(isPlanet(pair.Value.entity) && pair.Value.hasAuthority) //Only do this update if this worker has write access to the entity
+              {
+                EntityId planetId = pair.Key;
+                Entity entity = pair.Value.entity;
+                
+                PlanetInfoData planetInfoData = entity.Get<PlanetInfo>().Value.Get().Value;
+                
+                if(planetInfoData.playerId == "") // Don't do this update if the planet is uninhabited
+                {
+                  continue;
+                }
+                
+                // Create new component update object
+                PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
+                                                
+                if(planetInfoData.buildQueue != Improvement.EMPTY){
+                  if(planetInfoData.buildQueueTime - SecondsPerFrame <= 0)
+                  {
+                    switch (planetInfoData.buildQueue)
+                    {
+                      case Improvement.MINE:
+                        planetInfoUpdate.SetMineLevel(planetInfoData.mineLevel + 1);
+                        break;
+                      case Improvement.PROBE:
+                        planetInfoUpdate.SetProbes(planetInfoData.probes+1);
+                        break;
+                      case Improvement.HANGAR:
+                        planetInfoUpdate.SetHangarLevel(planetInfoData.hangarLevel + 1);
+                        break;
+                      case Improvement.DEPOSIT:
+                        planetInfoUpdate.SetDepositLevel(planetInfoData.depositLevel + 1);
+                        break;
+                      case Improvement.NANOBOTS:
+                        planetInfoUpdate.SetNanobotLevel(planetInfoData.nanobotLevel + 1);
+                        break;
+                      default:
+                        throw new SystemException("Unknown improvement type");
+                        break;
+                    }
+                    
+                    planetInfoUpdate.SetBuildQueue(Improvement.EMPTY);
+                    planetInfoUpdate.SetBuildQueueTime(0);
+                  }
+                  else
+                  {
+                    planetInfoUpdate.SetBuildQueueTime(planetInfoData.buildQueueTime - SecondsPerFrame);
+                  }
+                }
+
+                if(planetInfoData.buildMaterials > 0)
+                {
+                  planetInfoUpdate.SetMinerals(planetInfoData.minerals - planetInfoData.buildMaterials);
+                  planetInfoUpdate.SetBuildMaterials(0);
+                }
+                else
+                {
+                  if(planetInfoData.minerals < planetInfoData.depositLevel * 100)
+                  {
+                    planetInfoUpdate.SetMinerals(planetInfoData.minerals + planetInfoData.mineLevel * SecondsPerFrame);
+                  }
+                }
+                
+                connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
+              }
             }
+            
+            // Wait for a bit if necessary
+            stopwatch.Stop();
+            var waitFor = maxWait.Subtract(stopwatch.Elapsed);
+            System.Threading.Thread.Sleep(waitFor.Milliseconds > 0 ? waitFor : System.TimeSpan.Zero);
           }
         }
       }
@@ -232,6 +273,171 @@ namespace Demo
       using (var future = Connection.ConnectAsync(hostname, port, workerId, connectionParameters))
       {
         return future.Get();
+      }
+    }
+    
+    private static void HandleAssignPlanetRequest(CommandRequestOp<AssignPlanetResponder.Commands.AssignPlanet> request, Connection connection)
+    {
+      var logMessage = String.Format("Received AssignPlanet command from player {0}", request.Request.Get().Value.playerId);
+      connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+      
+      var planetAssigned = false;
+        
+      foreach (KeyValuePair<EntityId, ViewEntity> pair in EntityView)
+      {
+        if(!pair.Value.hasAuthority || !isPlanet(pair.Value.entity))
+        {
+          logMessage = String.Format("Skipping entity with entityId {0}", pair.Key);
+          connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+          continue;
+        }
+        
+        logMessage = String.Format("Picked planet with entityId {0} because I have authority", pair.Key);
+        connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+        
+        logMessage = String.Format("Entity.PlanetInfo: {0}", pair.Value.entity.Get<PlanetInfo>());
+        connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+        
+        PlanetInfoData planetInfoData = pair.Value.entity.Get<PlanetInfo>().Value.Get().Value;
+        
+        logMessage = String.Format("Entity {0} has playerId {1}", pair.Key, planetInfoData.playerId);
+        connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+        
+        if(planetInfoData.playerId == "")
+        {
+          var planetId = pair.Key;
+          var planetName = planetInfoData.name;
+          var playerId = request.Request.Get().Value.playerId;
+
+          //Create new component update object
+          PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
+          planetInfoUpdate.SetMinerals(10);
+          planetInfoUpdate.SetPlayerId(playerId);
+          connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
+
+          // Send the assigned planet to the client
+          var assignPlanetResponse = new AssignPlanetResponse(planetId, planetName);
+          var commandResponse = new AssignPlanetResponder.Commands.AssignPlanet.Response(assignPlanetResponse);
+          connection.SendCommandResponse(request.RequestId, commandResponse);
+
+          planetAssigned = true;
+
+          break;
+        }
+      }
+      
+      if(!planetAssigned)
+      {
+        logMessage = String.Format("No planets available for player {0}", request.Request.Get().Value.playerId);
+        throw new SystemException(logMessage);
+      }
+    }
+      
+    private static void HandlePlanetInfoRequest(CommandRequestOp<PlanetInfoResponder.Commands.PlanetInfo> request, Connection connection)
+    {
+      var logMessage = String.Format("Received PlanetInfo Command for EntityId {0}", request.Request.Get().Value.planetId);
+      connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+      
+      ViewEntity viewEntity;
+      if (EntityView.TryGetValue(request.Request.Get().Value.planetId, out viewEntity))
+      {
+        PlanetInfoData planetInfoData = viewEntity.entity.Get<PlanetInfo>().Value.Get().Value;
+        var planetInfoResponse = new PlanetInfoResponse(planetInfoData.name,
+          planetInfoData.mineLevel, planetInfoData.minerals, planetInfoData.depositLevel,
+          planetInfoData.probes, planetInfoData.hangarLevel,
+          planetInfoData.nanobotLevel,
+          planetInfoData.buildQueue, planetInfoData.buildQueueTime);
+        var commandResponse = new PlanetInfoResponder.Commands.PlanetInfo.Response(planetInfoResponse);
+        connection.SendCommandResponse(request.RequestId, commandResponse);
+      }
+      else
+      {
+        logMessage = String.Format("No planets available for planetId {0}", request.Request.Get().Value.planetId);
+        throw new SystemException(logMessage);
+      }
+    }
+
+    private static void HandlePlanetImprovementRequest(CommandRequestOp<PlanetImprovementResponder.Commands.PlanetImprovement> request, Connection connection)
+    {
+      var logMessage = String.Format("Received PlanetImprovement Command for EntityId {0}", request.Request.Get().Value.planetId);
+      connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
+      
+      ViewEntity viewEntity;
+      if (EntityView.TryGetValue(request.Request.Get().Value.planetId, out viewEntity))
+      {
+        var planetId = request.Request.Get().Value.planetId;
+        PlanetInfoData planetInfoData = viewEntity.entity.Get<PlanetInfo>().Value.Get().Value;
+        
+        string response;
+        int mineralsCost;
+        int timeRequired;
+        
+        if(planetInfoData.buildQueue != Improvement.EMPTY)
+        {
+          response = String.Format("Build queue is already full; currently building: {0} ({1} seconds left)",
+            planetInfoData.buildQueue,
+            (int) planetInfoData.buildQueueTime);
+        }
+        else
+        {
+          switch(request.Request.Get().Value.improvement)
+          {
+            case Improvement.MINE:
+              mineralsCost = planetInfoData.mineLevel * 20;
+              timeRequired = planetInfoData.mineLevel * 12;
+              break;
+            case Improvement.PROBE:
+              mineralsCost = 80;
+              timeRequired = 30;
+              break;
+            case Improvement.DEPOSIT:
+              mineralsCost = planetInfoData.depositLevel * 80;
+              timeRequired = planetInfoData.depositLevel * 30;
+              break;
+            case Improvement.HANGAR:
+              mineralsCost = planetInfoData.hangarLevel * 150;
+              timeRequired = planetInfoData.hangarLevel * 120;
+              break;
+            case Improvement.NANOBOTS:
+              mineralsCost = planetInfoData.nanobotLevel * 300;
+              timeRequired = planetInfoData.nanobotLevel * 150;
+              break;
+            default:
+              throw new SystemException("Unknown improvement type");
+              break;
+          }
+          
+          if(planetInfoData.minerals < mineralsCost)
+          {
+            response = String.Format("Not enough minerals to build {0}; requires {1} minerals ({2} available)",
+              request.Request.Get().Value.improvement,
+              mineralsCost,
+              (int) planetInfoData.minerals);
+          }
+          else if(request.Request.Get().Value.improvement == Improvement.PROBE && planetInfoData.probes == planetInfoData.hangarLevel * 3)
+          {
+            response = String.Format("Not enough space in your hangar to build a probe");
+          }
+          else
+          {
+            //Create new component update object
+            PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
+            planetInfoUpdate.SetBuildQueue(request.Request.Get().Value.improvement);
+            planetInfoUpdate.SetBuildQueueTime(timeRequired / planetInfoData.nanobotLevel);
+            planetInfoUpdate.SetBuildMaterials(mineralsCost);
+            connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
+            response = String.Format("Started building {0} on Planet {1} (it'll take {2} seconds)", request.Request.Get().Value.improvement, planetInfoData.name, timeRequired);
+          }
+        }
+        
+        var planetImprovementResponse = new PlanetImprovementResponse(response);
+        var commandResponse = new PlanetImprovementResponder.Commands.PlanetImprovement.Response(planetImprovementResponse);
+        connection.SendCommandResponse(request.RequestId, commandResponse);
+      }
+      else
+      {
+        logMessage = String.Format("No planet found for planetId {0}", request.Request.Get().Value.planetId);
+        throw new SystemException(logMessage);
       }
     }
   }
