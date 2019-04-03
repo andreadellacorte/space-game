@@ -479,7 +479,7 @@ namespace Demo
 
     private static Connection ConnectClient(string[] arguments)
     {
-      playerId = arguments[0];
+      PlayerId = arguments[0];
       if(arguments.Length == 3)
       {
         string hostname = arguments[1];
@@ -488,7 +488,7 @@ namespace Demo
         connectionParameters.WorkerType = WorkerType;
         connectionParameters.Network.ConnectionType = NetworkConnectionType.Tcp;
 
-        using (var future = Connection.ConnectAsync(hostname, port, playerId, connectionParameters))
+        using (var future = Connection.ConnectAsync(hostname, port, PlayerId, connectionParameters))
         {
           return future.Get();
         }
