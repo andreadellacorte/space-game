@@ -1,6 +1,7 @@
 // Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -16,6 +17,9 @@ namespace Demo
 {
   class Client
   {
+    private const int WorldDimension = 2200;
+    private const int AuthorityMarketSpacing = 200;
+
     private const string DAT_TokenSecret = "MWY3MTUyNjAtYmY1MS00MzRjLThiMmUtOTc4YTBjOGQ3NWJlOjo4M2ZlOGE3My0xZjFjLTQ3MmEtOGRmNi03NGM1ZDdkNDk2MTg=";
     private const string WorkerType = "LauncherClient";
     private const string LoggerName = "Client.cs";
@@ -30,13 +34,7 @@ namespace Demo
     private static EntityId AssignedPlanetId;
     private static string PlanetName;
     
-    private static readonly EntityId[] PlanetAuthorityMarkersEntityIds =
-    {
-      new EntityId(1),
-      new EntityId(2),
-      new EntityId(3),
-      new EntityId(4)
-    };
+    private static readonly EntityId[] PlanetAuthorityMarkersEntityIds = Enumerable.Range(1, WorldDimension / AuthorityMarketSpacing).Select(x => new EntityId(x)).ToArray();
 
     static int Main(string[] arguments)
     {
@@ -296,7 +294,7 @@ namespace Demo
                 case "improve":
                   if(command.Length == 2 && stringToImprovements.ContainsKey(command[1]))
                   {
-                    displayProgressBar($"Improving '{stringToImprovements[command[1]]}'...", 10, input);
+                    displayProgressBar($"Improving '{stringToImprovements[command[1]]}'... ", 10, input);
                     PlanetImprovementResponder.Commands.PlanetImprovement.Request planetImprovement =
                       new PlanetImprovementResponder.Commands.PlanetImprovement.Request(new PlanetImprovementRequest(AssignedPlanetId, stringToImprovements[command[1]]));
                     connection.SendCommandRequest(AssignedPlanetId, planetImprovement, CommandRequestTimeoutMS, null);
@@ -329,6 +327,8 @@ namespace Demo
                     Console.ForegroundColor = ConsoleColor.DarkYellow;
                     Console.WriteLine("\t\t\tstore more ships");
                     Console.ResetColor();
+
+                    Console.WriteLine();
                   }
                   break;
                 case "b":
@@ -358,6 +358,8 @@ namespace Demo
                     Console.ForegroundColor = ConsoleColor.DarkYellow;
                     Console.WriteLine("\t\t\tcan be used to scan other planets");
                     Console.ResetColor();
+
+                    Console.WriteLine();
                   }
                   break;
                   case "r":
@@ -387,6 +389,8 @@ namespace Demo
                       Console.ForegroundColor = ConsoleColor.DarkYellow;
                       Console.WriteLine("\t\t\tbuild everything faster");
                       Console.ResetColor();
+
+                      Console.WriteLine();
                     }
                     break;
                 case "s":
@@ -428,6 +432,9 @@ namespace Demo
                   Console.ForegroundColor = ConsoleColor.DarkRed;
                   Console.WriteLine("No idea about that command, sorry.");
                   Console.ResetColor();
+
+                  Console.WriteLine();
+
                   break;
                 }
 

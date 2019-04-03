@@ -1,26 +1,31 @@
 // Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 using System.Timers;
-using System.Threading;
 
 using Improbable;
 using Improbable.Worker;
 using Improbable.Collections;
 
+using Demo.Galaxies;
+
 namespace Demo
 {
   class SnapshotGenerator
   {
+    private const int WorldDimension = 2200;
+    private const int AuthorityMarketSpacing = 200;
+    private static readonly int[] WorkerLocations = Enumerable.Range(-WorldDimension / (2 * AuthorityMarketSpacing), WorldDimension / AuthorityMarketSpacing).Select(x => x * AuthorityMarketSpacing).ToArray();
+
     private const int ErrorExitStatus = 1;
     private const string LoggerName = "SnapshotGenerator.cs";
+
     private static readonly string[] WorkerLayers = {"planets"};
-    private static readonly int[] WorkerLocations = {-250, 250};
-    private static readonly int[] PlanetLocations = {-400, -350, -300, -250, -200, -150, -100, -50, 50, 100, 150, 200, 250, 300, 350, 400};
     private static readonly Random random = new Random();
     
     static int Main(string[] arguments)
@@ -37,6 +42,8 @@ namespace Demo
         printUsage();
         return ErrorExitStatus;
       }
+      
+      Console.WriteLine(WorkerLocations);
 
       GenerateSnapshot(arguments[0], WorkerLayers, WorkerLocations);
       
@@ -70,26 +77,24 @@ namespace Demo
           }
         }
         
+        var galaxy = Galaxy.Generate(new Spiral(), new Random());
+        
         // Create one planet
-        for (var x = 0; x < PlanetLocations.Length; x++)
+        foreach (var star in galaxy.Stars)
         {
-          for (var z = 0; z < PlanetLocations.Length; z++)
+          entity = createPlanet(star);
+          error = snapshotOutput.WriteEntity(new EntityId(entityId), entity);
+          if (error.HasValue)
           {
-            entity = createPlanet(PlanetLocations[x], PlanetLocations[z]);
-            
-            error = snapshotOutput.WriteEntity(new EntityId(entityId), entity);
-            if (error.HasValue)
-            {
-                throw new System.SystemException("error saving: " + error.Value);
-            }
-
-            entityId++;
+              throw new System.SystemException("error saving: " + error.Value);
           }
+
+          entityId++;
         }
       }
     }
     
-    private static Entity createPlanet(int x, int z)
+    private static Entity createPlanet(Star star)
     {
       const string entityType = "Planet";
       const string empty_player_name = "";
@@ -103,7 +108,7 @@ namespace Demo
       
       string random_password = random.Next().ToString("X");
 
-      int random_minerals = random.Next(5000);
+      int random_minerals = 100;
       
       // Defines worker attribute requirements for workers that can read a component.
       // workers with an attribute of "client" OR workerType will have read access
@@ -136,8 +141,8 @@ namespace Demo
       // Needed for the entity to be persisted in snapshots.
       entity.Add(new Persistence.Data());
       entity.Add(new Metadata.Data(entityType));
-      entity.Add(new Position.Data(new Coordinates(x, 0, z)));
-      entity.Add(new PlanetInfo.Data(StarName.Generate(random),
+      entity.Add(new Position.Data(new Coordinates(star.Position.X, star.Position.Y, star.Position.Z)));
+      entity.Add(new PlanetInfo.Data(star.Name,
         empty_player_name,
         default_mine_level, random_minerals, default_deposit_level,
         default_probes, default_hangar_level,

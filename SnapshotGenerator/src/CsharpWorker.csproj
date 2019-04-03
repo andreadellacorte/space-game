@@ -26,10 +26,22 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <HintPath>packages\System.Numerics.Vectors.4.0.0\lib\portable-net45+win8+wpa81\System.Numerics.Vectors.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Xml" />
     <Compile Include="SnapshotGenerator.cs" />
     <Compile Include="StarName.cs" />
     <Compile Include="RandomExtensions.cs" />
+    <Compile Include="BaseGalaxySpec.cs" />
+    <Compile Include="Galaxy.cs" />
+    <Compile Include="Spiral.cs" />
+    <Compile Include="Sphere.cs" />
+    <Compile Include="Star.cs" />
+    <Compile Include="Cluster.cs" />
+    <Compile Include="StarExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\lib\improbable\sdk\13.5.1\linux64\libCoreSdkDll.so">

@@ -9,5 +9,5 @@
   "serverWorkers": [
     "../PlanetWorker/planet_worker_config.json"
   ],
-  "launchConfig": "./deployment.json"
+  "launchConfiguration": "./deployment.json"
 }

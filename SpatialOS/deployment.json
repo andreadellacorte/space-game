@@ -1,15 +1,15 @@
 {
   "template": "small",
   "dimensionsInWorldUnits": {
-    "x": 1000,
-    "z": 1000
+    "x": 2200,
+    "z": 2200
   },
   "loadBalancing": {
     "layerConfigurations": [
       {
         "layer": "planets",
         "hexGrid": {
-          "numWorkers": 4
+          "numWorkers": 8
         }
       }
     ]
