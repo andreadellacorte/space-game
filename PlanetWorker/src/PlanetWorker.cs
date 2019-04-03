@@ -16,16 +16,9 @@ namespace Demo
     private const string LoggerName = "PlanetWorker.cs";
     private const int ErrorExitStatus = 1;
     private const uint GetOpListTimeoutInMilliseconds = 0;
-    private const string playerType = "Player";
     private const double SecondsPerFrame = 0.2;
-    
-    private class ViewEntity
-    {
-        public bool hasAuthority;
-        public Entity entity;
-    }
 
-    private static Dictionary<EntityId, ViewEntity> EntityView = new Dictionary<EntityId, ViewEntity>();
+    private static Dictionary<EntityId, Entity> EntityMap = new Dictionary<EntityId, Entity>();
     
     private static bool isPlanet(Entity entity)
     {
@@ -76,29 +69,12 @@ namespace Demo
           
           dispatcher.OnAuthorityChange<PlanetInfo>(op =>
           {
-            //string logMessage;
-
-            ViewEntity entity;
-            if (EntityView.TryGetValue(op.EntityId, out entity))
+            Entity entity;
+            if (EntityMap.TryGetValue(op.EntityId, out entity)
+                && (op.Authority == Authority.NotAuthoritative
+                    || op.Authority == Authority.AuthorityLossImminent))
             {
-              if(op.Authority == Authority.Authoritative)
-              {
-                //logMessage = String.Format("Gained authority over entityId {0}", op.EntityId);
-                //connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
-                entity.hasAuthority = true;
-              }
-              else if (op.Authority == Authority.NotAuthoritative)
-              {
-                //logMessage = String.Format("Lost authority over entityId {0}", op.EntityId);
-                //connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
-                entity.hasAuthority = false;
-              }
-              else if (op.Authority == Authority.AuthorityLossImminent)
-              {
-                //logMessage = String.Format("Lost authority over entityId {0}", op.EntityId);
-                //connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
-                entity.hasAuthority = false;
-              }
+              EntityMap.Remove(op.EntityId);
             }
           });
           
@@ -107,16 +83,16 @@ namespace Demo
             //var logMessage = String.Format("Adding PlanetInfo Component for entityId {0}", op.EntityId);
             //connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
 
-            ViewEntity entity;
-            if (EntityView.TryGetValue(op.EntityId, out entity))
+            Entity entity;
+            if (EntityMap.TryGetValue(op.EntityId, out entity))
             {
-                entity.entity.Add<PlanetInfo>(op.Data);
+              entity.Add<PlanetInfo>(op.Data);
             }
             else
             {
-                ViewEntity newEntity = new ViewEntity();
-                EntityView.Add(op.EntityId, newEntity);
-                newEntity.entity.Add<PlanetInfo>(op.Data);
+              Entity newEntity = new Entity();
+              EntityMap.Add(op.EntityId, entity);
+              entity.Add<PlanetInfo>(op.Data);
             }
           });
           
@@ -125,11 +101,11 @@ namespace Demo
             //var logMessage = String.Format("Updating PlanetInfo Component for entityId {0}", op.EntityId);
             //connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
 
-            ViewEntity entity;
-            if (EntityView.TryGetValue(op.EntityId, out entity))
+            Entity entity;
+            if (EntityMap.TryGetValue(op.EntityId, out entity))
             {
                 var update = op.Update.Get();
-                entity.entity.Update<PlanetInfo>(update);
+                entity.Update<PlanetInfo>(update);
             }
           });
           
@@ -139,17 +115,15 @@ namespace Demo
             //connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
 
             // AddEntity will always be followed by OnAddComponent
-            ViewEntity newEntity = new ViewEntity();
-            newEntity.hasAuthority = false;
-            newEntity.entity = new Entity();
-            EntityView.Add(op.EntityId, newEntity);
+            Entity newEntity = new Entity();
+            EntityMap.Add(op.EntityId, newEntity);
           });
           
           dispatcher.OnRemoveEntity(op =>
           {
             //var logMessage = String.Format("Removing entityId {0}", op.EntityId);
             //connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
-            EntityView.Remove(op.EntityId);
+            EntityMap.Remove(op.EntityId);
           });
 
           dispatcher.OnCommandRequest<AssignPlanetResponder.Commands.AssignPlanet>(request =>
@@ -182,71 +156,74 @@ namespace Demo
             var opList = connection.GetOpList(GetOpListTimeoutInMilliseconds);
             dispatcher.Process(opList);
             
-            foreach (var pair in EntityView)
+            foreach (var pair in EntityMap)
             {
-              if(isPlanet(pair.Value.entity) && pair.Value.hasAuthority) //Only do this update if this worker has write access to the entity
-              {
-                EntityId planetId = pair.Key;
-                Entity entity = pair.Value.entity;
-                
-                PlanetInfoData planetInfoData = entity.Get<PlanetInfo>().Value.Get().Value;
-                
-                if(planetInfoData.playerId == "") // Don't do this update if the planet is uninhabited
-                {
-                  continue;
-                }
-                
-                // Create new component update object
-                PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
-                                                
-                if(planetInfoData.buildQueue != Improvement.EMPTY){
-                  if(planetInfoData.buildQueueTime - SecondsPerFrame <= 0)
-                  {
-                    switch (planetInfoData.buildQueue)
-                    {
-                      case Improvement.MINE:
-                        planetInfoUpdate.SetMineLevel(planetInfoData.mineLevel + 1);
-                        break;
-                      case Improvement.PROBE:
-                        planetInfoUpdate.SetProbes(planetInfoData.probes+1);
-                        break;
-                      case Improvement.HANGAR:
-                        planetInfoUpdate.SetHangarLevel(planetInfoData.hangarLevel + 1);
-                        break;
-                      case Improvement.DEPOSIT:
-                        planetInfoUpdate.SetDepositLevel(planetInfoData.depositLevel + 1);
-                        break;
-                      case Improvement.NANOBOTS:
-                        planetInfoUpdate.SetNanobotLevel(planetInfoData.nanobotLevel + 1);
-                        break;
-                      default:
-                        throw new SystemException("Unknown improvement type");
-                    }
-                    
-                    planetInfoUpdate.SetBuildQueue(Improvement.EMPTY);
-                    planetInfoUpdate.SetBuildQueueTime(0);
-                  }
-                  else
-                  {
-                    planetInfoUpdate.SetBuildQueueTime(planetInfoData.buildQueueTime - SecondsPerFrame);
-                  }
-                }
+              Entity entity = pair.Value;
 
-                if(planetInfoData.buildMaterials > 0)
+              if(!isPlanet(entity))
+              {
+                continue;
+              }
+              
+              EntityId planetId = pair.Key;
+              PlanetInfoData planetInfoData = entity.Get<PlanetInfo>().Value.Get().Value;
+
+              if(planetInfoData.playerId == "") // Don't do this update if the planet is uninhabited)
+              {
+                continue;
+              }
+
+              // Create new component update object
+              PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
+                                              
+              if(planetInfoData.buildQueue != Improvement.EMPTY)
+              {
+                if(planetInfoData.buildQueueTime - SecondsPerFrame <= 0)
                 {
-                  planetInfoUpdate.SetMinerals(planetInfoData.minerals - planetInfoData.buildMaterials);
-                  planetInfoUpdate.SetBuildMaterials(0);
+                  switch (planetInfoData.buildQueue)
+                  {
+                    case Improvement.MINE:
+                      planetInfoUpdate.SetMineLevel(planetInfoData.mineLevel + 1);
+                      break;
+                    case Improvement.PROBE:
+                      planetInfoUpdate.SetProbes(planetInfoData.probes+1);
+                      break;
+                    case Improvement.HANGAR:
+                      planetInfoUpdate.SetHangarLevel(planetInfoData.hangarLevel + 1);
+                      break;
+                    case Improvement.DEPOSIT:
+                      planetInfoUpdate.SetDepositLevel(planetInfoData.depositLevel + 1);
+                      break;
+                    case Improvement.NANOBOTS:
+                      planetInfoUpdate.SetNanobotLevel(planetInfoData.nanobotLevel + 1);
+                      break;
+                    default:
+                      throw new SystemException("Unknown improvement type");
+                  }
+                  
+                  planetInfoUpdate.SetBuildQueue(Improvement.EMPTY);
+                  planetInfoUpdate.SetBuildQueueTime(0);
                 }
                 else
                 {
-                  if(planetInfoData.minerals < planetInfoData.depositLevel * 100)
-                  {
-                    planetInfoUpdate.SetMinerals(planetInfoData.minerals + planetInfoData.mineLevel * SecondsPerFrame);
-                  }
+                  planetInfoUpdate.SetBuildQueueTime(planetInfoData.buildQueueTime - SecondsPerFrame);
                 }
-                
-                connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
               }
+
+              if(planetInfoData.buildMaterials > 0)
+              {
+                planetInfoUpdate.SetMinerals(planetInfoData.minerals - planetInfoData.buildMaterials);
+                planetInfoUpdate.SetBuildMaterials(0);
+              }
+              else
+              {
+                if(planetInfoData.minerals < planetInfoData.depositLevel * 100)
+                {
+                  planetInfoUpdate.SetMinerals(planetInfoData.minerals + planetInfoData.mineLevel * SecondsPerFrame);
+                }
+              }
+              
+              connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
             }
             
             // Wait for a bit if necessary
@@ -286,15 +263,14 @@ namespace Demo
       var planetId = request.Request.Get().Value.planetId;
       var planetPassword = request.Request.Get().Value.password;
       
-      ViewEntity viewEntity;
+      Entity entity;
       if(planetId.Id != 0)
       {
-        if(EntityView.TryGetValue(request.Request.Get().Value.planetId, out viewEntity)
-           && viewEntity.hasAuthority)
+        if(EntityMap.TryGetValue(request.Request.Get().Value.planetId, out entity))
          {
-           planetInfoData = viewEntity.entity.Get<PlanetInfo>().Value.Get().Value;
+           planetInfoData = entity.Get<PlanetInfo>().Value.Get().Value;
 
-           if(!isPlanet(viewEntity.entity))
+           if(!isPlanet(entity))
            {
              planetId = new EntityId(0);
              logMessage = "Not a planet";
@@ -321,16 +297,16 @@ namespace Demo
       }
       else
       {
-        foreach(KeyValuePair<EntityId, ViewEntity> pair in EntityView)
+        foreach(KeyValuePair<EntityId, Entity> pair in EntityMap)
         {
-          if(!pair.Value.hasAuthority || !isPlanet(pair.Value.entity))
+          if(!isPlanet(pair.Value))
           {
             logMessage = String.Format("Skipping entity with entityId {0}", pair.Key);
             connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
             continue;
           }
           
-          planetInfoData = pair.Value.entity.Get<PlanetInfo>().Value.Get().Value;
+          planetInfoData = pair.Value.Get<PlanetInfo>().Value.Get().Value;
 
           logMessage = String.Format("Picked planet with entityId {0} because I have authority", pair.Key);
           connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
@@ -372,10 +348,10 @@ namespace Demo
       var logMessage = String.Format("Received PlanetInfo Command for EntityId {0}", request.Request.Get().Value.planetId);
       connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
       
-      ViewEntity viewEntity;
-      if (EntityView.TryGetValue(request.Request.Get().Value.planetId, out viewEntity))
+      Entity entity;
+      if (EntityMap.TryGetValue(request.Request.Get().Value.planetId, out entity))
       {
-        PlanetInfoData planetInfoData = viewEntity.entity.Get<PlanetInfo>().Value.Get().Value;
+        PlanetInfoData planetInfoData = entity.Get<PlanetInfo>().Value.Get().Value;
         var planetInfoResponse = new PlanetInfoResponse(planetInfoData.name,
           planetInfoData.mineLevel, planetInfoData.minerals, planetInfoData.depositLevel,
           planetInfoData.probes, planetInfoData.hangarLevel,
@@ -396,11 +372,11 @@ namespace Demo
       var logMessage = String.Format("Received PlanetImprovement Command for EntityId {0}", request.Request.Get().Value.planetId);
       connection.SendLogMessage(LogLevel.Info, LoggerName, logMessage);
       
-      ViewEntity viewEntity;
-      if (EntityView.TryGetValue(request.Request.Get().Value.planetId, out viewEntity))
+      Entity entity;
+      if (EntityMap.TryGetValue(request.Request.Get().Value.planetId, out entity))
       {
         var planetId = request.Request.Get().Value.planetId;
-        PlanetInfoData planetInfoData = viewEntity.entity.Get<PlanetInfo>().Value.Get().Value;
+        PlanetInfoData planetInfoData = entity.Get<PlanetInfo>().Value.Get().Value;
         
         string response;
         int mineralsCost;

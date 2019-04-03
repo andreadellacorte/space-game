@@ -1,8 +1,8 @@
 {
   "template": "small",
   "dimensionsInWorldUnits": {
-    "x": 2000,
-    "z": 2000
+    "x": 2200,
+    "z": 2200
   },
   "loadBalancing": {
     "layerConfigurations": [

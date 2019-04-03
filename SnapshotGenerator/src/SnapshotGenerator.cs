@@ -18,7 +18,7 @@ namespace Demo
 {
   class SnapshotGenerator
   {
-    private const int WorldDimension = 2000;
+    private const int WorldDimension = 2200;
     private const int AuthorityMarketSpacing = 200;
     private static readonly int[] WorkerLocations = Enumerable.Range(-WorldDimension / (2 * AuthorityMarketSpacing), WorldDimension / AuthorityMarketSpacing).Select(x => x * AuthorityMarketSpacing).ToArray();
 

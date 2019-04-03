@@ -17,7 +17,7 @@ namespace Demo
 {
   class Client
   {
-    private const int WorldDimension = 2000;
+    private const int WorldDimension = 2200;
     private const int AuthorityMarketSpacing = 200;
 
     private const string DAT_TokenSecret = "MWY3MTUyNjAtYmY1MS00MzRjLThiMmUtOTc4YTBjOGQ3NWJlOjo4M2ZlOGE3My0xZjFjLTQ3MmEtOGRmNi03NGM1ZDdkNDk2MTg=";
