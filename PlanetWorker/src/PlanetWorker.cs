@@ -221,7 +221,6 @@ namespace Demo
                         break;
                       default:
                         throw new SystemException("Unknown improvement type");
-                        break;
                     }
                     
                     planetInfoUpdate.SetBuildQueue(Improvement.EMPTY);
@@ -404,7 +403,6 @@ namespace Demo
               break;
             default:
               throw new SystemException("Unknown improvement type");
-              break;
           }
           
           if(planetInfoData.minerals < mineralsCost)
@@ -420,10 +418,13 @@ namespace Demo
           }
           else
           {
+            // Adjust time for nanobot level
+            timeRequired = timeRequired / planetInfoData.nanobotLevel;
+            
             //Create new component update object
             PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
             planetInfoUpdate.SetBuildQueue(request.Request.Get().Value.improvement);
-            planetInfoUpdate.SetBuildQueueTime(timeRequired / planetInfoData.nanobotLevel);
+            planetInfoUpdate.SetBuildQueueTime(timeRequired);
             planetInfoUpdate.SetBuildMaterials(mineralsCost);
             connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
             response = String.Format("Started building {0} on Planet {1} (it'll take {2} seconds)", request.Request.Get().Value.improvement, planetInfoData.name, timeRequired);

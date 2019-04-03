@@ -1,5 +1,5 @@
 {
-  "workerType": "InteractiveClient",
+  "workerType": "LauncherClient",
   "layer": "client",
   "entityInterest": {
     "rangeEntityInterest": {

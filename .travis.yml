@@ -1,9 +1,10 @@
 os: osx
 env:
   global:
-    - DEPLOYMENT_NAME=spacegame
+    - DEPLOYMENT_NAME=spacegame_ci
     - DEPLOYMENT_TTL=ttl_1_hours
     - ASSEMBLY_NAME=spacegame_$TRAVIS_JOB_NUMBER
+    - DEV_LOGIN=dev_login
 cache:
   timeout: 3600
   directories:
