@@ -354,7 +354,7 @@ namespace Demo
           }
         }
       }
-      
+
       // Send the assigned planet to the client
       var assignPlanetResponse = new AssignPlanetResponse(planetId, planetName, planetPassword, logMessage);
       var commandResponse = new AssignPlanetResponder.Commands.AssignPlanet.Response(assignPlanetResponse);
@@ -366,7 +366,7 @@ namespace Demo
         connection.SendLogMessage(LogLevel.Error, LoggerName, logMessage);
       }
     }
-      
+
     private static void HandlePlanetInfoRequest(CommandRequestOp<PlanetInfoResponder.Commands.PlanetInfo> request, Connection connection)
     {
       var logMessage = String.Format("Received PlanetInfo Command for EntityId {0}", request.Request.Get().Value.planetId);
