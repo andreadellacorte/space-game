@@ -266,34 +266,36 @@ namespace Demo
       Entity entity;
       if(planetId.Id != 0)
       {
-        if(EntityMap.TryGetValue(request.Request.Get().Value.planetId, out entity))
-         {
-           planetInfoData = entity.Get<PlanetInfo>().Value.Get().Value;
+        if(EntityMap.TryGetValue(planetId, out entity))
+        {
+          if(!isPlanet(entity))
+          {
+            planetId = new EntityId(0);
+            logMessage = "Not a planet";
+          }
+          else
+          {
+            planetInfoData = entity.Get<PlanetInfo>().Value.Get().Value;
+            if(planetInfoData.password != planetPassword)
+            {
+              planetId = new EntityId(0);
+              logMessage = "Password not valid";
+            }
+            else
+            {
+              planetName = planetInfoData.name;
 
-           if(!isPlanet(entity))
-           {
-             planetId = new EntityId(0);
-             logMessage = "Not a planet";
-           }
-           else if(planetInfoData.password != planetPassword)
-           {
-             planetId = new EntityId(0);
-             logMessage = "Password not valid";
-           }
-           else
-           {
-             planetName = planetInfoData.name;
-
-             // Create new component update object
-             PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
-             planetInfoUpdate.SetPlayerId(playerId);
-             connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
-           }
-         }
-         else
-         {
-           planetId = new EntityId(-1);
-         }
+              // Create new component update object
+              PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
+              planetInfoUpdate.SetPlayerId(playerId);
+              connection.SendComponentUpdate<PlanetInfo>(planetId, planetInfoUpdate);
+            }
+          }
+        }
+        else
+        {
+          planetId = new EntityId(-1);
+        }
       }
       else
       {

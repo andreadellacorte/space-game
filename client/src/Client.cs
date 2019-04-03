@@ -19,6 +19,7 @@ namespace Demo
   {
     private const int WorldDimension = 2200;
     private const int AuthorityMarketSpacing = 200;
+    private const int AuthorityMarketsNumber = WorldDimension / AuthorityMarketSpacing;
 
     private const string DAT_TokenSecret = "MWY3MTUyNjAtYmY1MS00MzRjLThiMmUtOTc4YTBjOGQ3NWJlOjo4M2ZlOGE3My0xZjFjLTQ3MmEtOGRmNi03NGM1ZDdkNDk2MTg=";
     private const string WorkerType = "LauncherClient";
@@ -33,8 +34,6 @@ namespace Demo
 
     private static EntityId AssignedPlanetId;
     private static string PlanetName;
-    
-    private static readonly EntityId[] PlanetAuthorityMarkersEntityIds = Enumerable.Range(1, WorldDimension / AuthorityMarketSpacing).Select(x => new EntityId(x)).ToArray();
 
     static int Main(string[] arguments)
     {
@@ -195,11 +194,8 @@ namespace Demo
                       displayProgressBar($"Logging in as planet '{i}'... ", 10, input);
                       AssignPlanetResponder.Commands.AssignPlanet.Request assignPlanet =
                         new AssignPlanetResponder.Commands.AssignPlanet.Request(new AssignPlanetRequest(PlayerId, planetId, inputPassword));
-                        
-                      foreach (var authorityMarkerEntityId in PlanetAuthorityMarkersEntityIds)
-                      {
-                          connection.SendCommandRequest(authorityMarkerEntityId, assignPlanet, 1500, null);
-                      }
+
+                      connection.SendCommandRequest(planetId, assignPlanet, 1500, null);
                     }
                     else if(command.Length == 1)
                     {
@@ -207,7 +203,7 @@ namespace Demo
                       AssignPlanetResponder.Commands.AssignPlanet.Request assignPlanet =
                         new AssignPlanetResponder.Commands.AssignPlanet.Request(new AssignPlanetRequest(PlayerId, planetId, inputPassword));
                       
-                      connection.SendCommandRequest(PlanetAuthorityMarkersEntityIds[Random.Next(PlanetAuthorityMarkersEntityIds.Length)], assignPlanet, 1500, null);
+                      connection.SendCommandRequest(new EntityId(Random.Next(AuthorityMarketsNumber)), assignPlanet, 1500, null);
                     }
                     else
                     {
@@ -226,6 +222,7 @@ namespace Demo
                     break;
                   default:
                     Console.WriteLine("Incorrect command");
+                    Console.WriteLine();
                     break;
                 }
               }
@@ -267,6 +264,8 @@ namespace Demo
               Console.ResetColor();
 
               input = Console.ReadLine().Trim();
+              
+              Console.WriteLine();
               
               Dictionary<string, Improvement>  stringToImprovements = new Dictionary<string, Improvement>();
               stringToImprovements.Add("mine", Improvement.MINE);
