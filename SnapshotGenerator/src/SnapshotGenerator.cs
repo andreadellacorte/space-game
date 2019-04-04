@@ -104,7 +104,7 @@ namespace Demo
       const int default_deposit_level = 1;
       const int default_probes = 0;
       const int default_hangar_level = 1;
-      const int default_nanobots_level = 1;
+      const int default_nanobots_level = 0;
       
       string random_password = random.Next().ToString("X");
 

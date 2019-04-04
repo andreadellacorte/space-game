@@ -11,6 +11,7 @@ namespace Demo
 {
   class PlanetWorker
   {
+    private const int economySpeed = 1;
     private const uint timeoutMillis = 500u;
     private const string WorkerType = "PlanetWorker";
     private const string LoggerName = "PlanetWorker.cs";
@@ -395,24 +396,19 @@ namespace Demo
           switch(request.Request.Get().Value.improvement)
           {
             case Improvement.MINE:
-              mineralsCost = planetInfoData.mineLevel * 20;
-              timeRequired = planetInfoData.mineLevel * 12;
+              mineralsCost = 20 * (int) Math.Pow(1.5, (double) planetInfoData.mineLevel);
               break;
             case Improvement.PROBE:
               mineralsCost = 80;
-              timeRequired = 30;
               break;
             case Improvement.DEPOSIT:
-              mineralsCost = planetInfoData.depositLevel * 80;
-              timeRequired = planetInfoData.depositLevel * 30;
+              mineralsCost = 50 * (int) Math.Pow(1.2, (double) planetInfoData.depositLevel);
               break;
             case Improvement.HANGAR:
-              mineralsCost = planetInfoData.hangarLevel * 150;
-              timeRequired = planetInfoData.hangarLevel * 120;
+              mineralsCost = 80 * (int) Math.Pow(1.2, (double) planetInfoData.hangarLevel);
               break;
             case Improvement.NANOBOTS:
-              mineralsCost = planetInfoData.nanobotLevel * 300;
-              timeRequired = planetInfoData.nanobotLevel * 150;
+              mineralsCost = 300 * (int) Math.Pow(1.5, (double) planetInfoData.nanobotLevel);
               break;
             default:
               throw new SystemException("Unknown improvement type");
@@ -432,7 +428,7 @@ namespace Demo
           else
           {
             // Adjust time for nanobot level
-            timeRequired = timeRequired / planetInfoData.nanobotLevel;
+            timeRequired = mineralsCost / (2 * (1 + planetInfoData.nanobotLevel) * economySpeed);
             
             //Create new component update object
             PlanetInfo.Update planetInfoUpdate = new PlanetInfo.Update();
