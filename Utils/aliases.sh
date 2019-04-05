@@ -2,11 +2,24 @@
 
 # This script builds the full project by running all other provided shell scripts in sequence
 
-FOLDER='/Users/andrea/Documents/GitHub/space-game'
+pushd $(dirname "${BASH_SOURCE[0]}")/..
+FOLDER=$(pwd)
+popd
+
+if [[ "$OSTYPE" == "win32" ]]; then
+BUILD_SYSTEM='win32'
+elif [[ "$OSTYPE" == "msys" ]]; then
+BUILD_SYSTEM='win32'
+else
 BUILD_SYSTEM='macOS64'
+fi
 
 function n() {
-  osascript -e "display notification \"$1\" with title \"SpatialOS\""
+  if [[ "$BUILD_SYSTEM" == "macOS64" ]]; then
+    osascript -e "display notification \"$1\" with title \"SpatialOS\""
+  else
+    mshta "javascript:alert('SpatialOS\n\n$1');close();"
+  fi
 }
 
 function b() { # Build Project
