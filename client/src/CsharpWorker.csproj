@@ -43,14 +43,6 @@
       <Link>CoreSdkDll.lib</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="improbable_client_launch_config.json">
-      <Link>improbable_client_launch_config.json</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="run_remote.sh">
-      <Link>run_remote.sh</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="run_game.sh">
       <Link>run_game.sh</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

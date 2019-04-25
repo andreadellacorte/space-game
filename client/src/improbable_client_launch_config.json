@@ -1,4 +1,0 @@
-{
-	"launcherCommand": "bash",
-	"launcherArguments": ["./run_remote.sh"]
-}

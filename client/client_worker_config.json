@@ -12,10 +12,20 @@
   },
   "uploadConfiguration": {
     "windows": {
-      "localBuildDirectory": "../client/bin/x64/ReleaseWindows"
+      "localBuildDirectory": "../client/bin/x64/ReleaseWindows",
+      "launcherCommand": "Client.exe",
+      "launcherArguments": [
+        "${IMPROBABLE_PLAYER_IDENTITY_TOKEN}"
+      ]
     },
     "macos": {
-      "localBuildDirectory": "../client/bin/x64/ReleaseMacOS"
+      "localBuildDirectory": "../client/bin/x64/ReleaseMacOS",
+      "launcherCommand": "open",
+      "launcherArguments": [
+        "-a",
+        "Terminal",
+        "./run_game.sh"
+      ]
     },
     "linux": {
       "localBuildDirectory": "../client/bin/x64/ReleaseLinux"
