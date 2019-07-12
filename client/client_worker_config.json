@@ -13,18 +13,21 @@
   "uploadConfiguration": {
     "windows": {
       "localBuildDirectory": "../client/bin/x64/ReleaseWindows",
-      "launcherCommand": "Client.exe",
-      "launcherArguments": [
-        "${IMPROBABLE_PLAYER_IDENTITY_TOKEN}"
+      "launcherCommand": "bootstrap.bat",
+      "launcherArguments" : [
+        "${IMPROBABLE_LOCATOR_HOSTNAME}",
+        "${IMPROBABLE_PLAYER_IDENTITY_TOKEN}",
+        "${IMPROBABLE_LOGIN_TOKEN}"
       ]
     },
     "macos": {
       "localBuildDirectory": "../client/bin/x64/ReleaseMacOS",
-      "launcherCommand": "open",
-      "launcherArguments": [
-        "-a",
-        "Terminal",
-        "./run_game.sh"
+      "launcherCommand": "bash",
+      "launcherArguments" : [
+        "bootstrap.sh",
+        "${IMPROBABLE_LOCATOR_HOSTNAME}",
+        "${IMPROBABLE_PLAYER_IDENTITY_TOKEN}",
+        "${IMPROBABLE_LOGIN_TOKEN}"
       ]
     },
     "linux": {

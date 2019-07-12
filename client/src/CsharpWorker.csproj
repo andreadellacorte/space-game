@@ -43,8 +43,12 @@
       <Link>CoreSdkDll.lib</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="run_game.sh">
-      <Link>run_game.sh</Link>
+    <Content Include="bootstrap.bat">
+      <Link>bootstrap.bat</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="bootstrap.sh">
+      <Link>bootstrap.sh</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

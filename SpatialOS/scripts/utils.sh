@@ -12,8 +12,6 @@ popd () {
 
 export popd pushd
 
-set -e -u
-
 pushd "$( dirname "${BASH_SOURCE[0]}" )"
 
 SDK_VERSION="13.5.1"
