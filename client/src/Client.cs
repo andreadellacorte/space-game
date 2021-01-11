@@ -21,7 +21,7 @@ namespace Demo
     private const int AuthorityMarketSpacing = 200;
     private const int AuthorityMarketsNumber = WorldDimension / AuthorityMarketSpacing;
 
-    private const string DAT_TokenSecret = "MWY3MTUyNjAtYmY1MS00MzRjLThiMmUtOTc4YTBjOGQ3NWJlOjo4M2ZlOGE3My0xZjFjLTQ3MmEtOGRmNi03NGM1ZDdkNDk2MTg=";
+    private const string DAT_TokenSecret = "=";
     private const string WorkerType = "LauncherClient";
     private const string LoggerName = "Client.cs";
     private const int ErrorExitStatus = 1;
